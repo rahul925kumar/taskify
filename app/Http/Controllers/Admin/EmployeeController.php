@@ -14,8 +14,8 @@ class EmployeeController extends Controller
         $employees = User::where('is_admin', false)
             ->withCount([
                 'assignedTasks as total_tasks',
-                'assignedTasks as completed_tasks' => fn($q) => $q->where('status', 'completed'),
-                'assignedTasks as pending_tasks' => fn($q) => $q->whereNotIn('status', ['completed', 'cancelled']),
+                'assignedTasks as completed_tasks' => fn ($q) => $q->where('status', 'completed'),
+                'assignedTasks as pending_tasks' => fn ($q) => $q->whereNotIn('status', ['completed', 'cancelled']),
             ])
             ->latest()
             ->paginate(15);
@@ -44,7 +44,7 @@ class EmployeeController extends Controller
 
         if ($request->hasFile('image')) {
             $file = $request->file('image');
-            $filename = time() . '_' . $file->getClientOriginalName();
+            $filename = time().'_'.$file->getClientOriginalName();
             $file->move(public_path('uploads/employees'), $filename);
             $validated['image'] = $filename;
         }
@@ -58,13 +58,13 @@ class EmployeeController extends Controller
     {
         $employee->loadCount([
             'assignedTasks as total_tasks',
-            'assignedTasks as completed_tasks' => fn($q) => $q->where('status', 'completed'),
-            'assignedTasks as pending_tasks' => fn($q) => $q->whereNotIn('status', ['completed', 'cancelled']),
-            'assignedTasks as overdue_tasks' => fn($q) => $q->where('due_date', '<', today())
+            'assignedTasks as completed_tasks' => fn ($q) => $q->where('status', 'completed'),
+            'assignedTasks as pending_tasks' => fn ($q) => $q->whereNotIn('status', ['completed', 'cancelled']),
+            'assignedTasks as overdue_tasks' => fn ($q) => $q->where('due_date', '<', today())
                 ->whereNotIn('status', ['completed', 'cancelled']),
         ]);
 
-        $recentTasks = $employee->assignedTasks()->with('project')->latest()->take(10)->get();
+        $recentTasks = $employee->assignedTasks()->with('originalAssignee')->latest()->take(10)->get();
         $recentAttendance = $employee->attendances()->latest()->take(30)->get();
 
         return view('admin.employees.show', compact('employee', 'recentTasks', 'recentAttendance'));
@@ -79,7 +79,7 @@ class EmployeeController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $employee->id,
+            'email' => 'required|email|unique:users,email,'.$employee->id,
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
             'role' => 'required|string|max:255',
@@ -87,11 +87,11 @@ class EmployeeController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            if ($employee->image && file_exists(public_path('uploads/employees/' . $employee->image))) {
-                unlink(public_path('uploads/employees/' . $employee->image));
+            if ($employee->image && file_exists(public_path('uploads/employees/'.$employee->image))) {
+                unlink(public_path('uploads/employees/'.$employee->image));
             }
             $file = $request->file('image');
-            $filename = time() . '_' . $file->getClientOriginalName();
+            $filename = time().'_'.$file->getClientOriginalName();
             $file->move(public_path('uploads/employees'), $filename);
             $validated['image'] = $filename;
         }
@@ -104,6 +104,7 @@ class EmployeeController extends Controller
     public function destroy(User $employee)
     {
         $employee->delete();
+
         return redirect()->route('admin.employees.index')->with('success', 'Employee soft deleted successfully.');
     }
 }

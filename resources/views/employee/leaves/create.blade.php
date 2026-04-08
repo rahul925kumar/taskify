@@ -41,6 +41,17 @@
                     </div>
                 </div>
                 <div class="mb-3">
+                    <label class="form-label">Delegate work to (optional)</label>
+                    <select name="delegated_to" class="form-select @error('delegated_to') is-invalid @enderror">
+                        <option value="">— No delegate —</option>
+                        @foreach($employees as $emp)
+                            <option value="{{ $emp->id }}" {{ old('delegated_to') == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
+                        @endforeach
+                    </select>
+                    <small class="text-muted">Suggest a colleague to cover your work. They cannot be on approved leave during your dates.</small>
+                    @error('delegated_to')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+                <div class="mb-3">
                     <label class="form-label">Reason <span class="text-danger">*</span></label>
                     <textarea name="reason" class="form-control @error('reason') is-invalid @enderror" rows="4" required placeholder="Please provide a reason for your leave...">{{ old('reason') }}</textarea>
                     @error('reason')<div class="invalid-feedback">{{ $message }}</div>@enderror

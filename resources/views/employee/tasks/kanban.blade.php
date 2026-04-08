@@ -1,20 +1,22 @@
 @extends('layouts.app')
-@section('title', 'My Kanban Board')
+@section('title', 'Kanban Board')
 @push('styles')
 <style>
     .kanban-board { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 20px; }
-    .kanban-column { min-width: 260px; max-width: 280px; flex-shrink: 0; }
+    .kanban-column { min-width: 280px; max-width: 300px; flex-shrink: 0; }
     .kanban-column .card { min-height: 400px; }
+    .kanban-column .card-header { padding: 10px 15px; }
     .kanban-task { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: grab; transition: box-shadow 0.2s; }
     .kanban-task:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .kanban-task .task-title { font-weight: 600; font-size: 14px; }
+    .kanban-task .task-title { font-weight: 600; font-size: 14px; margin-bottom: 5px; }
     .kanban-task .task-meta { font-size: 11px; color: #8d9498; }
     .task-count { background: rgba(255,255,255,0.3); border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+    .task-cancel-reason { font-size: 11px; margin-top: 6px; padding: 6px; background: #fdeaea; border-radius: 4px; color: #c62828; }
 </style>
 @endpush
 @section('content')
     <div class="page-header">
-        <h3 class="fw-bold mb-3">My Kanban Board</h3>
+        <h3 class="fw-bold mb-3">My Kanban</h3>
         <ul class="breadcrumbs mb-3">
             <li class="nav-home"><a href="{{ route('employee.dashboard') }}"><i class="icon-home"></i></a></li>
             <li class="separator"><i class="icon-arrow-right"></i></li>
@@ -22,7 +24,9 @@
         </ul>
     </div>
 
-    @php $columnColors = ['todo'=>'warning','in_progress'=>'primary','in_review'=>'info','completed'=>'success','on_hold'=>'secondary','cancelled'=>'danger']; @endphp
+    @php
+        $columnColors = ['todo'=>'warning','in_progress'=>'primary','in_review'=>'info','completed'=>'success','on_hold'=>'secondary','cancelled'=>'danger'];
+    @endphp
 
     <div class="kanban-board">
         @foreach($statuses as $status)
@@ -38,14 +42,21 @@
                         @foreach(($tasks[$status] ?? collect()) as $task)
                             <div class="kanban-task" draggable="true" data-task-id="{{ $task->id }}">
                                 <div class="task-title">
-                                    <a href="{{ route('employee.tasks.show', $task) }}">{{ Str::limit($task->title, 30) }}</a>
+                                    <a href="{{ route('employee.tasks.show', $task) }}">{{ Str::limit($task->title, 35) }}</a>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center mt-2">
                                     <span class="badge bg-{{ ['low'=>'secondary','medium'=>'info','high'=>'warning','urgent'=>'danger'][$task->priority] ?? 'secondary' }}" style="font-size:10px;">{{ ucfirst($task->priority) }}</span>
-                                    <span class="task-meta">{{ $task->project->name ?? '' }}</span>
                                 </div>
-                                @if($task->due_date)
-                                    <div class="task-meta mt-1"><i class="fas fa-calendar" style="font-size:10px;"></i> {{ $task->due_date->format('M d') }}</div>
+                                <div class="task-meta mt-1">
+                                    @if($task->originalAssignee && $task->originalAssignee->id !== $task->assigned_to)
+                                        <div><i class="fas fa-user-clock" style="font-size:10px;"></i> Initially: {{ $task->originalAssignee->name }}</div>
+                                    @endif
+                                    @if($task->due_date)
+                                        <div><i class="fas fa-calendar" style="font-size:10px;"></i> Due {{ $task->due_date->format('M d') }}</div>
+                                    @endif
+                                </div>
+                                @if($task->status === 'cancelled' && $task->cancellation_reason)
+                                    <div class="task-cancel-reason kanban-cancel-display">{{ Str::limit($task->cancellation_reason, 120) }}</div>
                                 @endif
                             </div>
                         @endforeach
@@ -57,6 +68,7 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('assets/js/plugin/sweetalert/sweetalert.min.js') }}"></script>
 <script>
     let draggedTask = null;
     document.querySelectorAll('.kanban-task').forEach(task => {
@@ -64,29 +76,91 @@
         task.addEventListener('dragend', e => { task.style.opacity = '1'; });
     });
 
+    function patchTaskStatus(taskId, newStatus, cancellationReason) {
+        const body = { status: newStatus };
+        if (cancellationReason) body.cancellation_reason = cancellationReason;
+        return fetch('/employee/tasks/' + taskId + '/status', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+            },
+            body: JSON.stringify(body)
+        }).then(async r => {
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                let msg = data.message || 'Failed to update status';
+                if (data.errors) msg = Object.values(data.errors).flat().join(' ');
+                throw new Error(msg);
+            }
+            return data;
+        });
+    }
+
     document.querySelectorAll('.kanban-drop').forEach(col => {
         col.addEventListener('dragover', e => { e.preventDefault(); col.style.background = '#f0f6ff'; });
         col.addEventListener('dragleave', e => { col.style.background = ''; });
         col.addEventListener('drop', e => {
             e.preventDefault();
             col.style.background = '';
-            if (draggedTask) {
-                col.appendChild(draggedTask);
-                let taskId = draggedTask.dataset.taskId;
-                let newStatus = col.dataset.status;
-                fetch(`/employee/tasks/${taskId}/status`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
-                    },
-                    body: JSON.stringify({ status: newStatus })
-                }).then(r => {
-                    if (r.ok) showToast('Task status updated to ' + newStatus.replaceAll('_', ' '), 'success');
-                    else r.json().then(d => showToast(d.message || 'Failed to update status', 'error')).catch(() => showToast('Failed to update status', 'error'));
-                }).catch(() => showToast('Network error', 'error'));
-            }
+            if (!draggedTask) return;
+            const sourceCol = draggedTask.closest('.kanban-drop');
+            const taskId = draggedTask.dataset.taskId;
+            const newStatus = col.dataset.status;
+            if (sourceCol === col) return;
+
+            const statusLabel = newStatus.replace(/_/g, ' ');
+            swal({
+                title: 'Move task?',
+                text: 'Change status to "' + statusLabel + '"?',
+                icon: 'info',
+                buttons: ['Cancel', 'Confirm'],
+                dangerMode: false,
+            }).then(function(confirm) {
+                if (!confirm) return;
+
+                const moveDom = function(cancelText) {
+                    col.appendChild(draggedTask);
+                    let el = draggedTask.querySelector('.kanban-cancel-display');
+                    if (newStatus === 'cancelled' && cancelText) {
+                        if (!el) {
+                            el = document.createElement('div');
+                            el.className = 'task-cancel-reason kanban-cancel-display';
+                            draggedTask.appendChild(el);
+                        }
+                        el.textContent = cancelText.length > 120 ? cancelText.slice(0, 117) + '…' : cancelText;
+                    } else if (el && newStatus !== 'cancelled') {
+                        el.remove();
+                    }
+                };
+
+                const onSuccess = function(cancelText) {
+                    moveDom(cancelText);
+                    showToast('Task status updated', 'success');
+                };
+
+                const onFail = function(err) {
+                    showToast(err.message || 'Failed', 'error');
+                };
+
+                if (newStatus === 'cancelled') {
+                    const reason = window.prompt('Please enter the reason for cancellation:');
+                    if (reason === null) return;
+                    const trimmed = (reason || '').trim();
+                    if (!trimmed) {
+                        showToast('Cancellation reason is required.', 'error');
+                        return;
+                    }
+                    patchTaskStatus(taskId, newStatus, trimmed).then(function() {
+                        onSuccess(trimmed);
+                    }).catch(function(err) { onFail(err); });
+                } else {
+                    patchTaskStatus(taskId, newStatus, null).then(function() {
+                        onSuccess(null);
+                    }).catch(function(err) { onFail(err); });
+                }
+            });
         });
     });
 </script>

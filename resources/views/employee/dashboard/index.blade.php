@@ -78,12 +78,11 @@
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover">
-                        <thead><tr><th>Task</th><th>Project</th><th>Due Date</th><th>Priority</th><th>Action</th></tr></thead>
+                        <thead><tr><th>Task</th><th>Due Date</th><th>Priority</th><th>Action</th></tr></thead>
                         <tbody>
                             @foreach($overdueTasks as $task)
                                 <tr class="table-danger">
                                     <td>{{ $task->title }}</td>
-                                    <td>{{ $task->project->name ?? '-' }}</td>
                                     <td>{{ $task->due_date->format('M d, Y') }}</td>
                                     <td><span class="badge bg-{{ ['low'=>'secondary','medium'=>'info','high'=>'warning','urgent'=>'danger'][$task->priority] }}">{{ ucfirst($task->priority) }}</span></td>
                                     <td><a href="{{ route('employee.tasks.show', $task) }}" class="btn btn-sm btn-info">View</a></td>
@@ -107,7 +106,7 @@
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
-                        <tr><th>Task</th><th>Project</th><th>Status</th><th>Priority</th><th>Due Date</th><th>Action</th></tr>
+                        <tr><th>Task</th><th>Status</th><th>Priority</th><th>Due Date</th><th>Action</th></tr>
                     </thead>
                     <tbody>
                         @forelse($recentTasks as $task)
@@ -116,14 +115,13 @@
                             @endphp
                             <tr class="{{ $task->isOverdue() ? 'table-danger' : '' }}">
                                 <td><a href="{{ route('employee.tasks.show', $task) }}">{{ Str::limit($task->title, 40) }}</a></td>
-                                <td>{{ $task->project->name ?? '-' }}</td>
                                 <td><span class="badge bg-{{ $statusColors[$task->status] ?? 'secondary' }}">{{ ucfirst(str_replace('_',' ',$task->status)) }}</span></td>
                                 <td><span class="badge bg-{{ ['low'=>'secondary','medium'=>'info','high'=>'warning','urgent'=>'danger'][$task->priority] }}">{{ ucfirst($task->priority) }}</span></td>
                                 <td>{{ $task->due_date?->format('M d, Y') ?? '-' }}</td>
                                 <td><a href="{{ route('employee.tasks.show', $task) }}" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></a></td>
                             </tr>
                         @empty
-                            <tr><td colspan="6" class="text-center text-muted">No tasks assigned yet.</td></tr>
+                            <tr><td colspan="5" class="text-center text-muted">No tasks assigned yet.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

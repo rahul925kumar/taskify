@@ -24,22 +24,25 @@
                         $prioColors = ['low'=>'secondary','medium'=>'info','high'=>'warning','urgent'=>'danger'];
                     @endphp
                     <div class="row mb-3">
-                        <div class="col-md-3"><strong>Project:</strong><br>{{ $task->project->name }}</div>
-                        <div class="col-md-3"><strong>Status:</strong><br><span class="badge bg-{{ $statusColors[$task->status] ?? 'secondary' }}">{{ ucfirst(str_replace('_',' ',$task->status)) }}</span></div>
-                        <div class="col-md-3"><strong>Priority:</strong><br><span class="badge bg-{{ $prioColors[$task->priority] ?? 'secondary' }}">{{ ucfirst($task->priority) }}</span></div>
-                        <div class="col-md-3"><strong>Type:</strong><br><span class="badge bg-dark">{{ ucfirst($task->type) }}</span></div>
+                        <div class="col-md-4"><strong>Status:</strong><br><span class="badge bg-{{ $statusColors[$task->status] ?? 'secondary' }}">{{ ucfirst(str_replace('_',' ',$task->status)) }}</span></div>
+                        <div class="col-md-4"><strong>Priority:</strong><br><span class="badge bg-{{ $prioColors[$task->priority] ?? 'secondary' }}">{{ ucfirst($task->priority) }}</span></div>
+                        <div class="col-md-4"><strong>Initially assigned:</strong><br>{{ $task->originalAssignee?->name ?? '—' }}</div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-3"><strong>Category:</strong><br>{{ ucfirst($task->category) }}</div>
-                        <div class="col-md-3"><strong>Start Date:</strong><br>{{ $task->start_date?->format('M d, Y') ?? '-' }}</div>
-                        <div class="col-md-3"><strong>Due Date:</strong><br>
+                        <div class="col-md-4"><strong>Start Date:</strong><br>{{ $task->start_date?->format('M d, Y') ?? '-' }}</div>
+                        <div class="col-md-4"><strong>Due Date:</strong><br>
                             @if($task->due_date)
                                 <span class="{{ $task->isOverdue() ? 'text-danger fw-bold' : '' }}">{{ $task->due_date->format('M d, Y') }}</span>
                                 @if($task->isOverdue()) <span class="badge bg-danger">OVERDUE</span> @endif
                             @else - @endif
                         </div>
-                        <div class="col-md-3"><strong>Created By:</strong><br>{{ $task->creator->name }}</div>
+                        <div class="col-md-4"><strong>Created By:</strong><br>{{ $task->creator->name }}</div>
                     </div>
+                    @if($task->status === 'cancelled' && $task->cancellation_reason)
+                        <div class="alert alert-danger py-2 mb-3">
+                            <strong>Cancellation reason:</strong> {{ $task->cancellation_reason }}
+                        </div>
+                    @endif
                     @if($task->description)
                         <div class="mb-3"><strong>Description:</strong><p class="mt-1">{{ $task->description }}</p></div>
                     @endif

@@ -1,21 +1,20 @@
 <?php
 
-use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Admin\AttendanceController;
+use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
 use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\Admin\ClientController;
-use App\Http\Controllers\Admin\ProjectController;
-use App\Http\Controllers\Admin\TaskController as AdminTaskController;
-use App\Http\Controllers\Admin\ReportController;
-use App\Http\Controllers\Admin\AttendanceController;
-use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
-use App\Http\Controllers\Employee\DashboardController as EmployeeDashboard;
-use App\Http\Controllers\Employee\TaskController as EmployeeTaskController;
 use App\Http\Controllers\Admin\LeaveController as AdminLeaveController;
+use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\TaskController as AdminTaskController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Employee\DashboardController as EmployeeDashboard;
 use App\Http\Controllers\Employee\LeaveController as EmployeeLeaveController;
+use App\Http\Controllers\Employee\TaskController as EmployeeTaskController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn() => redirect()->route('admin.login'));
+Route::get('/', fn () => redirect()->route('admin.login'));
 
 // Auth Routes
 Route::middleware('guest')->group(function () {
@@ -35,7 +34,6 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
 
     Route::resource('employees', EmployeeController::class);
     Route::resource('clients', ClientController::class)->except(['show']);
-    Route::resource('projects', ProjectController::class);
 
     Route::resource('tasks', AdminTaskController::class);
     Route::get('/tasks-kanban', [AdminTaskController::class, 'kanban'])->name('tasks.kanban');

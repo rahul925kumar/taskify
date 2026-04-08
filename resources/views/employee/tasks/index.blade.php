@@ -44,7 +44,7 @@
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
-                        <tr><th>#</th><th>Title</th><th>Project</th><th>Status</th><th>Priority</th><th>Due Date</th><th>Actions</th></tr>
+                        <tr><th>#</th><th>Title</th><th>Initially assigned</th><th>Status</th><th>Priority</th><th>Due Date</th><th>Actions</th></tr>
                     </thead>
                     <tbody>
                         @php
@@ -55,7 +55,7 @@
                             <tr class="{{ $task->isOverdue() ? 'table-danger' : '' }}">
                                 <td>{{ $task->id }}</td>
                                 <td><a href="{{ route('employee.tasks.show', $task) }}">{{ Str::limit($task->title, 40) }}</a></td>
-                                <td>{{ $task->project->name ?? '-' }}</td>
+                                <td>{{ $task->originalAssignee?->name ?? '—' }}</td>
                                 <td><span class="badge bg-{{ $statusColors[$task->status] ?? 'secondary' }}">{{ ucfirst(str_replace('_',' ',$task->status)) }}</span></td>
                                 <td><span class="badge bg-{{ $prioColors[$task->priority] ?? 'secondary' }}">{{ ucfirst($task->priority) }}</span></td>
                                 <td>

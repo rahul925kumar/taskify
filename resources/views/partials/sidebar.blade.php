@@ -38,12 +38,6 @@
                             <p>Clients</p>
                         </a>
                     </li>
-                    <li class="nav-item {{ request()->routeIs('admin.projects.*') ? 'active' : '' }}">
-                        <a href="{{ route('admin.projects.index') }}">
-                            <i class="fas fa-project-diagram"></i>
-                            <p>Projects</p>
-                        </a>
-                    </li>
                     <li class="nav-section">
                         <span class="sidebar-mini-icon"><i class="fa fa-ellipsis-h"></i></span>
                         <h4 class="text-section">Tasks</h4>

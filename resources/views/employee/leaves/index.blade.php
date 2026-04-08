@@ -21,7 +21,7 @@
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
-                        <tr><th>#</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th><th>Admin Remarks</th><th>Applied On</th></tr>
+                        <tr><th>#</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Delegate</th><th>Reason</th><th>Status</th><th>Admin Remarks</th><th>Applied On</th></tr>
                     </thead>
                     <tbody>
                         @forelse($leaves as $leave)
@@ -34,13 +34,14 @@
                                 <td>{{ $leave->from_date->format('M d, Y') }}</td>
                                 <td>{{ $leave->to_date->format('M d, Y') }}</td>
                                 <td>{{ $leave->totalDays() }}</td>
+                                <td>{{ $leave->delegate?->name ?? '—' }}</td>
                                 <td>{{ Str::limit($leave->reason, 40) }}</td>
                                 <td><span class="badge bg-{{ $statusColors[$leave->status] }}">{{ ucfirst($leave->status) }}</span></td>
                                 <td>{{ $leave->admin_remarks ?? '-' }}</td>
                                 <td>{{ $leave->created_at->format('M d, Y') }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="9" class="text-center text-muted">No leave records.</td></tr>
+                            <tr><td colspan="10" class="text-center text-muted">No leave records.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

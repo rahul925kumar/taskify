@@ -18,20 +18,10 @@
             <form method="POST" action="{{ route('admin.tasks.store') }}" enctype="multipart/form-data">
                 @csrf
                 <div class="row">
-                    <div class="col-md-8 mb-3">
+                    <div class="col-md-12 mb-3">
                         <label class="form-label">Title <span class="text-danger">*</span></label>
                         <input type="text" name="title" class="form-control @error('title') is-invalid @enderror" value="{{ old('title') }}" required>
                         @error('title')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Project <span class="text-danger">*</span></label>
-                        <select name="project_id" class="form-select @error('project_id') is-invalid @enderror" required>
-                            <option value="">Select Project</option>
-                            @foreach($projects as $project)
-                                <option value="{{ $project->id }}" {{ old('project_id', request('project_id')) == $project->id ? 'selected' : '' }}>{{ $project->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('project_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
                 <div class="mb-3">
@@ -40,21 +30,25 @@
                 </div>
                 <div class="row">
                     <div class="col-md-3 mb-3">
-                        <label class="form-label">Assign To</label>
-                        <select name="assigned_to" class="form-select">
-                            <option value="">Unassigned</option>
+                        <label class="form-label">Assign To <span class="text-danger">*</span></label>
+                        <select name="assigned_to" class="form-select @error('assigned_to') is-invalid @enderror" required>
+                            <option value="">Select employee</option>
                             @foreach($employees as $emp)
                                 <option value="{{ $emp->id }}" {{ old('assigned_to') == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
                             @endforeach
                         </select>
+                        @error('assigned_to')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-3 mb-3">
-                        <label class="form-label">Start Date</label>
-                        <input type="date" name="start_date" class="form-control" value="{{ old('start_date') }}">
+                        <label class="form-label">Start Date <span class="text-danger">*</span></label>
+                        <input type="date" name="start_date" class="form-control @error('start_date') is-invalid @enderror" value="{{ old('start_date', date('Y-m-d')) }}" required>
+                        @error('start_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-3 mb-3">
-                        <label class="form-label">Due Date</label>
-                        <input type="date" name="due_date" class="form-control" value="{{ old('due_date') }}">
+                        <label class="form-label">Due in (days) <span class="text-danger">*</span></label>
+                        <input type="number" name="due_days" class="form-control @error('due_days') is-invalid @enderror" value="{{ old('due_days', 7) }}" min="1" max="3650" required>
+                        <small class="text-muted">Due date = start date + this many days</small>
+                        @error('due_days')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label">Status</label>
@@ -71,22 +65,6 @@
                         <select name="priority" class="form-select" required>
                             @foreach(config('constants.task_priorities') as $p)
                                 <option value="{{ $p }}" {{ old('priority', 'medium') == $p ? 'selected' : '' }}>{{ ucfirst($p) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Type</label>
-                        <select name="type" class="form-select" required>
-                            @foreach(config('constants.task_types') as $t)
-                                <option value="{{ $t }}" {{ old('type', 'feature') == $t ? 'selected' : '' }}>{{ ucfirst($t) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Category</label>
-                        <select name="category" class="form-select" required>
-                            @foreach(config('constants.task_categories') as $c)
-                                <option value="{{ $c }}" {{ old('category', 'other') == $c ? 'selected' : '' }}>{{ ucfirst($c) }}</option>
                             @endforeach
                         </select>
                     </div>

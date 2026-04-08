@@ -20,15 +20,7 @@
         <div class="card-body">
             {{-- Filters --}}
             <form method="GET" class="row g-3 mb-4">
-                <div class="col-md-2">
-                    <select name="project_id" class="form-select form-select-sm">
-                        <option value="">All Projects</option>
-                        @foreach($projects as $project)
-                            <option value="{{ $project->id }}" {{ request('project_id') == $project->id ? 'selected' : '' }}>{{ $project->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <select name="status" class="form-select form-select-sm">
                         <option value="">All Status</option>
                         @foreach(config('constants.task_statuses') as $status)
@@ -36,7 +28,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <select name="priority" class="form-select form-select-sm">
                         <option value="">All Priority</option>
                         @foreach(config('constants.task_priorities') as $p)
@@ -44,7 +36,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <select name="assigned_to" class="form-select form-select-sm">
                         <option value="">All Employees</option>
                         @foreach($employees as $emp)
@@ -52,10 +44,10 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <input type="text" name="search" class="form-control form-control-sm" placeholder="Search..." value="{{ request('search') }}">
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <button type="submit" class="btn btn-sm btn-info">Filter</button>
                     <a href="{{ route('admin.tasks.index') }}" class="btn btn-sm btn-secondary">Reset</a>
                 </div>
@@ -67,8 +59,8 @@
                         <tr>
                             <th>#</th>
                             <th>Title</th>
-                            <th>Project</th>
                             <th>Assignee</th>
+                            <th>Initially assigned</th>
                             <th>Status</th>
                             <th>Priority</th>
                             <th>Due Date</th>
@@ -80,8 +72,8 @@
                             <tr class="{{ $task->isOverdue() ? 'table-danger' : '' }}">
                                 <td>{{ $task->id }}</td>
                                 <td><a href="{{ route('admin.tasks.show', $task) }}">{{ Str::limit($task->title, 40) }}</a></td>
-                                <td>{{ $task->project->name ?? '-' }}</td>
                                 <td>{{ $task->assignee->name ?? 'Unassigned' }}</td>
+                                <td>{{ $task->originalAssignee?->name ?? '—' }}</td>
                                 <td>
                                     @php
                                         $statusColors = ['todo'=>'warning','in_progress'=>'primary','in_review'=>'info','completed'=>'success','on_hold'=>'secondary','cancelled'=>'danger'];

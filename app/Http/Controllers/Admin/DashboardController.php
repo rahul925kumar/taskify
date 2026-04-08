@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Client;
 use App\Models\Leave;
-use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +16,7 @@ class DashboardController extends Controller
     {
         $totalEmployees = User::where('is_admin', false)->count();
         $totalClients = Client::count();
-        $totalProjects = Project::count();
+        $openTasks = Task::whereNotIn('status', ['completed', 'cancelled'])->count();
         $totalTasks = Task::count();
 
         $tasksByStatus = Task::select('status', DB::raw('count(*) as count'))
@@ -27,13 +26,13 @@ class DashboardController extends Controller
 
         $employees = User::where('is_admin', false)
             ->withCount([
-                'assignedTasks as completed_tasks' => fn($q) => $q->where('status', 'completed'),
-                'assignedTasks as pending_tasks' => fn($q) => $q->whereNotIn('status', ['completed', 'cancelled']),
+                'assignedTasks as completed_tasks' => fn ($q) => $q->where('status', 'completed'),
+                'assignedTasks as pending_tasks' => fn ($q) => $q->whereNotIn('status', ['completed', 'cancelled']),
                 'assignedTasks as total_tasks',
             ])
             ->get();
 
-        $recentTasks = Task::with(['assignee', 'project'])
+        $recentTasks = Task::with(['assignee', 'project', 'originalAssignee'])
             ->latest()
             ->take(10)
             ->get();
@@ -49,12 +48,12 @@ class DashboardController extends Controller
         $pendingLeaves = Leave::where('status', 'pending')->with('user')->latest()->get();
 
         $onLeaveToday = User::where('is_admin', false)
-            ->whereHas('leaves', fn($q) => $q->where('status', 'approved')->where('from_date', '<=', today())->where('to_date', '>=', today()))
-            ->withCount(['assignedTasks as pending_tasks' => fn($q) => $q->whereNotIn('status', ['completed', 'cancelled'])])
+            ->whereHas('leaves', fn ($q) => $q->where('status', 'approved')->where('from_date', '<=', today())->where('to_date', '>=', today()))
+            ->withCount(['assignedTasks as pending_tasks' => fn ($q) => $q->whereNotIn('status', ['completed', 'cancelled'])])
             ->get();
 
         return view('admin.dashboard.index', compact(
-            'totalEmployees', 'totalClients', 'totalProjects', 'totalTasks',
+            'totalEmployees', 'totalClients', 'openTasks', 'totalTasks',
             'tasksByStatus', 'employees', 'recentTasks', 'todayLogins', 'overdueTasksCount',
             'pendingLeaves', 'onLeaveToday'
         ));

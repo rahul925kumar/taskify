@@ -38,7 +38,7 @@ class LeaveController extends Controller
                     ->where('to_date', '>=', today());
             }])
             ->withCount([
-                'assignedTasks as pending_tasks' => fn($q) => $q->whereNotIn('status', ['completed', 'cancelled']),
+                'assignedTasks as pending_tasks' => fn ($q) => $q->whereNotIn('status', ['completed', 'cancelled']),
             ])
             ->get();
 
@@ -47,11 +47,10 @@ class LeaveController extends Controller
 
     public function show(Leave $leave)
     {
-        $leave->load('user');
+        $leave->load(['user', 'delegate']);
 
         $pendingTasks = Task::where('assigned_to', $leave->user_id)
             ->whereNotIn('status', ['completed', 'cancelled'])
-            ->with('project')
             ->get();
 
         $availableEmployees = User::where('is_admin', false)
@@ -73,7 +72,7 @@ class LeaveController extends Controller
 
         $leave->user->notify(new TaskNotification(
             'Leave Approved',
-            'Your ' . $leave->type . ' leave from ' . $leave->from_date->format('M d') . ' to ' . $leave->to_date->format('M d') . ' has been approved.',
+            'Your '.$leave->type.' leave from '.$leave->from_date->format('M d').' to '.$leave->to_date->format('M d').' has been approved.',
             route('employee.leaves.index')
         ));
 
@@ -91,7 +90,7 @@ class LeaveController extends Controller
 
         $leave->user->notify(new TaskNotification(
             'Leave Rejected',
-            'Your ' . $leave->type . ' leave from ' . $leave->from_date->format('M d') . ' to ' . $leave->to_date->format('M d') . ' has been rejected.' . ($request->admin_remarks ? ' Reason: ' . $request->admin_remarks : ''),
+            'Your '.$leave->type.' leave from '.$leave->from_date->format('M d').' to '.$leave->to_date->format('M d').' has been rejected.'.($request->admin_remarks ? ' Reason: '.$request->admin_remarks : ''),
             route('employee.leaves.index')
         ));
 
@@ -123,10 +122,10 @@ class LeaveController extends Controller
 
         $newAssignee->notify(new TaskNotification(
             'Tasks Reassigned',
-            count($tasks) . ' task(s) have been reassigned to you while ' . $leave->user->name . ' is on leave.',
+            count($tasks).' task(s) have been reassigned to you while '.$leave->user->name.' is on leave.',
             route('employee.tasks.index')
         ));
 
-        return back()->with('success', count($tasks) . ' task(s) reassigned to ' . $newAssignee->name . '.');
+        return back()->with('success', count($tasks).' task(s) reassigned to '.$newAssignee->name.'.');
     }
 }

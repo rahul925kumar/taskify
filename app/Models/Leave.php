@@ -10,7 +10,7 @@ class Leave extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'from_date', 'to_date', 'type', 'reason', 'status', 'admin_remarks',
+        'user_id', 'delegated_to', 'from_date', 'to_date', 'type', 'reason', 'status', 'admin_remarks',
     ];
 
     protected function casts(): array
@@ -24,6 +24,11 @@ class Leave extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function delegate()
+    {
+        return $this->belongsTo(User::class, 'delegated_to');
     }
 
     public function isActive(): bool
