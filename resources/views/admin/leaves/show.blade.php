@@ -38,6 +38,13 @@
                         <tr><td class="text-muted">Applied</td><td>{{ $leave->created_at->format('M d, Y h:i A') }}</td></tr>
                     </table>
 
+                    @if($leave->delegate)
+                        <div class="mt-2">
+                            <strong>Suggested work delegate:</strong>
+                            <p class="mt-1 mb-0">{{ $leave->delegate->name }} ({{ $leave->delegate->email }})</p>
+                        </div>
+                    @endif
+
                     <div class="mt-3">
                         <strong>Reason:</strong>
                         <p class="mt-1">{{ $leave->reason }}</p>
@@ -113,7 +120,7 @@
                             <div class="table-responsive">
                                 <table class="table table-hover">
                                     <thead>
-                                        <tr><th width="40"></th><th>Task</th><th>Project</th><th>Status</th><th>Priority</th><th>Due Date</th></tr>
+                                        <tr><th width="40"></th><th>Task</th><th>Status</th><th>Priority</th><th>Due Date</th></tr>
                                     </thead>
                                     <tbody>
                                         @php
@@ -124,7 +131,6 @@
                                             <tr class="{{ $task->isOverdue() ? 'table-danger' : '' }}">
                                                 <td><input type="checkbox" name="task_ids[]" value="{{ $task->id }}" class="form-check-input task-checkbox"></td>
                                                 <td><a href="{{ route('admin.tasks.show', $task) }}">{{ Str::limit($task->title, 35) }}</a></td>
-                                                <td>{{ $task->project->name ?? '-' }}</td>
                                                 <td><span class="badge bg-{{ $statusColors[$task->status] ?? 'secondary' }}">{{ ucfirst(str_replace('_',' ',$task->status)) }}</span></td>
                                                 <td><span class="badge bg-{{ $prioColors[$task->priority] ?? 'secondary' }}">{{ ucfirst($task->priority) }}</span></td>
                                                 <td>

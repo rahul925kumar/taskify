@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -76,5 +77,17 @@ class User extends Authenticatable
             ->where('from_date', '<=', today())
             ->where('to_date', '>=', today())
             ->first();
+    }
+
+    /**
+     * Whether this user has an approved leave overlapping the given date range (inclusive).
+     */
+    public function hasApprovedLeaveOverlapping(CarbonInterface $from, CarbonInterface $to): bool
+    {
+        return $this->leaves()
+            ->where('status', 'approved')
+            ->where('from_date', '<=', $to->toDateString())
+            ->where('to_date', '>=', $from->toDateString())
+            ->exists();
     }
 }

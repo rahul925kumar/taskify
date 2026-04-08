@@ -1,59 +1,193 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Taskify - Custom Task Management System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A full-featured task management system built with **Laravel 12** and **KaiAdmin Lite** dashboard template. Designed for organizations to manage employees, projects, tasks, and team productivity.
 
-## About Laravel
+**Developed by [TechnoByte Developers](https://github.com/rahul925kumar)**
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Authentication
+- Admin login with email & password
+- Employee login via **OTP** (sent to admin email, valid for 10 minutes)
+- Role-based access control (Admin / Employee)
 
-## Learning Laravel
+### Admin Panel
+- **Dashboard** — stats cards, task status charts, employee performance bar chart, today's logins, on-leave alerts, pending leave requests
+- **Employee Management** — create, edit, view, soft delete with profile image upload
+- **Client Management** — CRUD for client records
+- **Project Management** — create projects with client association, date ranges, and status tracking
+- **Task Management** — full CRUD with filters (project, status, priority, assignee, search)
+  - Assign / reassign tasks to employees
+  - Task comments with nested replies
+  - File attachments
+  - Complete audit trail (task history)
+  - Status, priority, type, and category classification
+- **Kanban Board** — drag-and-drop task management with real-time status updates
+- **Leave Management** — approve/reject employee leave requests, view on-leave employees with pending tasks, bulk reassign tasks
+- **Reports** — employee performance table with completion rates, tasks by priority/type/category charts, monthly task trends
+- **Attendance** — track employee login/logout times, filter by date and employee
+- **Notifications** — in-app notification system with mark as read
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### Employee Panel
+- **Dashboard** — pending & overdue task alerts, task stats, recent tasks
+- **My Tasks** — filtered list of assigned tasks
+- **Task Detail** — update status, add comments/replies, upload attachments, view history
+- **Kanban Board** — drag-and-drop for own tasks
+- **Leave Management** — apply for leave, view leave history and status
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## Tech Stack
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+| Layer | Technology |
+|-------|-----------|
+| Backend | Laravel 12 (PHP 8.2+) |
+| Database | MySQL 8.0 |
+| Frontend | KaiAdmin Lite 1.2.0, Bootstrap 5 |
+| Charts | Chart.js |
+| Notifications | Bootstrap Notify |
+| Alerts | SweetAlert |
 
-### Premium Partners
+---
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Setup Instructions
 
-## Contributing
+### Prerequisites
+- PHP 8.2 or higher
+- Composer
+- MySQL 8.0
+- Git
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 1. Clone the Repository
 
-## Code of Conduct
+```bash
+git clone https://github.com/rahul925kumar/taskify.git
+cd taskify
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 2. Install Dependencies
 
-## Security Vulnerabilities
+```bash
+composer install
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 3. Environment Configuration
+
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+Edit `.env` and set your database credentials:
+
+```
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=your_database_name
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+```
+
+### 4. Create the Database
+
+```bash
+mysql -u root -p -e "CREATE DATABASE your_database_name;"
+```
+
+### 5. Run Migrations & Seed Data
+
+```bash
+php artisan migrate
+php artisan db:seed
+```
+
+This will create:
+- Admin user with the configured email
+- 8 sample employees, 5 clients, 6 projects, 30 tasks with comments, histories, and 14 days of attendance data
+
+### 6. Create Storage Link
+
+```bash
+php artisan storage:link
+```
+
+### 7. Start the Server
+
+```bash
+php artisan serve
+```
+
+Visit `http://127.0.0.1:8000`
+
+---
+
+## Default Login Credentials
+
+### Admin
+- **Email:** `rahulpassi925@gmail.com`
+- **Password:** `admin123`
+
+### Employee (OTP Login)
+Use any seeded employee email (e.g., `amit.sharma@company.com`). The OTP will be sent to the admin email.
+
+---
+
+## Configuration
+
+### Admin Email
+The admin email is configured in `config/constants.php`:
+
+```php
+'admin_email' => 'rahulpassi925@gmail.com',
+```
+
+### Mail Setup (for OTP)
+Configure SMTP settings in `.env` for OTP emails to work:
+
+```
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your_email@gmail.com
+MAIL_PASSWORD=your_app_password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=your_email@gmail.com
+```
+
+### Timezone
+The application is configured for IST (Asia/Kolkata) in `config/app.php`.
+
+---
+
+## Project Structure
+
+```
+app/
+├── Http/Controllers/
+│   ├── Admin/          # Admin controllers (Dashboard, Employee, Client, Project, Task, Report, Attendance, Leave, Notification)
+│   ├── Auth/           # Login controller (Admin + Employee OTP)
+│   └── Employee/       # Employee controllers (Dashboard, Task, Leave)
+├── Mail/               # OTP mailer
+├── Models/             # Eloquent models (User, Client, Project, Task, TaskComment, TaskAttachment, TaskHistory, Attendance, Leave)
+├── Middleware/          # Admin & Employee middleware
+└── Notifications/      # Task notification
+database/
+├── migrations/         # All table migrations
+└── seeders/            # Admin + dummy data seeders
+resources/views/
+├── admin/              # Admin panel views
+├── employee/           # Employee panel views
+├── auth/               # Login & OTP views
+├── layouts/            # App & auth layouts
+├── partials/           # Sidebar, navbar, footer
+└── emails/             # OTP email template
+```
+
+---
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is proprietary software developed by **TechnoByte Developers**.

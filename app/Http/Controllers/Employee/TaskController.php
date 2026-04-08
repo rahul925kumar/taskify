@@ -4,16 +4,18 @@ namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
 use App\Models\Task;
+use App\Models\TaskAttachment;
 use App\Models\TaskComment;
 use App\Models\TaskHistory;
-use App\Models\TaskAttachment;
+use App\Models\User;
+use App\Notifications\TaskNotification;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Task::where('assigned_to', auth()->id())->with('project');
+        $query = Task::where('assigned_to', auth()->id())->with('originalAssignee');
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -23,6 +25,7 @@ class TaskController extends Controller
         }
 
         $tasks = $query->latest()->paginate(15)->withQueryString();
+
         return view('employee.tasks.index', compact('tasks'));
     }
 
@@ -32,7 +35,8 @@ class TaskController extends Controller
             abort(403);
         }
 
-        $task->load(['project', 'assignee', 'creator', 'comments.user', 'comments.replies.user', 'attachments.uploader', 'histories.user']);
+        $task->load(['project', 'assignee', 'originalAssignee', 'creator', 'comments.user', 'comments.replies.user', 'attachments.uploader', 'histories.user']);
+
         return view('employee.tasks.show', compact('task'));
     }
 
@@ -42,17 +46,44 @@ class TaskController extends Controller
             abort(403);
         }
 
-        $request->validate(['status' => 'required|in:' . implode(',', config('constants.task_statuses'))]);
+        $request->validate([
+            'status' => 'required|in:'.implode(',', config('constants.task_statuses')),
+            'cancellation_reason' => 'required_if:status,cancelled|nullable|string|max:2000',
+        ]);
 
         $oldStatus = $task->status;
-        $task->update(['status' => $request->status]);
+        $newStatus = $request->status;
+
+        $update = ['status' => $newStatus];
+        if ($newStatus === 'cancelled') {
+            $update['cancellation_reason'] = $request->cancellation_reason;
+        } else {
+            $update['cancellation_reason'] = null;
+        }
+
+        $task->update($update);
+
+        $details = "Status changed from '{$oldStatus}' to '{$newStatus}'";
+        if ($newStatus === 'cancelled' && $request->filled('cancellation_reason')) {
+            $details .= '. Reason: '.$request->cancellation_reason;
+        }
 
         TaskHistory::create([
             'task_id' => $task->id,
             'user_id' => auth()->id(),
             'action' => 'status_changed',
-            'details' => "Status changed from '{$oldStatus}' to '{$request->status}'",
+            'details' => $details,
         ]);
+
+        if ($oldStatus !== 'completed' && $newStatus === 'completed') {
+            foreach (User::where('is_admin', true)->get() as $admin) {
+                $admin->notify(new TaskNotification(
+                    'Task Completed',
+                    "Task '{$task->title}' was marked completed by ".auth()->user()->name.'.',
+                    route('admin.tasks.show', $task)
+                ));
+            }
+        }
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json(['success' => true]);
@@ -98,7 +129,7 @@ class TaskController extends Controller
         $originalName = $file->getClientOriginalName();
         $mimeType = $file->getClientMimeType();
         $size = $file->getSize();
-        $filename = time() . '_' . $originalName;
+        $filename = time().'_'.$originalName;
         $file->move(public_path('uploads/attachments'), $filename);
 
         TaskAttachment::create([
@@ -116,7 +147,7 @@ class TaskController extends Controller
     public function kanban()
     {
         $tasks = Task::where('assigned_to', auth()->id())
-            ->with('project')
+            ->with(['project', 'originalAssignee'])
             ->get()
             ->groupBy('status');
 

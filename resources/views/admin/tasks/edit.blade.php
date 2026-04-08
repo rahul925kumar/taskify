@@ -1,6 +1,13 @@
 @extends('layouts.app')
 @section('title', 'Edit Task')
 @section('content')
+    @php
+        $dueDaysValue = old('due_days');
+        if ($dueDaysValue === null && $task->start_date && $task->due_date) {
+            $dueDaysValue = max(1, $task->start_date->diffInDays($task->due_date, false));
+        }
+        $dueDaysValue = $dueDaysValue ?? 7;
+    @endphp
     <div class="page-header">
         <h3 class="fw-bold mb-3">Edit Task</h3>
         <ul class="breadcrumbs mb-3">
@@ -18,18 +25,10 @@
             <form method="POST" action="{{ route('admin.tasks.update', $task) }}">
                 @csrf @method('PUT')
                 <div class="row">
-                    <div class="col-md-8 mb-3">
+                    <div class="col-md-12 mb-3">
                         <label class="form-label">Title <span class="text-danger">*</span></label>
                         <input type="text" name="title" class="form-control @error('title') is-invalid @enderror" value="{{ old('title', $task->title) }}" required>
                         @error('title')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Project <span class="text-danger">*</span></label>
-                        <select name="project_id" class="form-select" required>
-                            @foreach($projects as $project)
-                                <option value="{{ $project->id }}" {{ old('project_id', $task->project_id) == $project->id ? 'selected' : '' }}>{{ $project->name }}</option>
-                            @endforeach
-                        </select>
                     </div>
                 </div>
                 <div class="mb-3">
@@ -38,21 +37,21 @@
                 </div>
                 <div class="row">
                     <div class="col-md-3 mb-3">
-                        <label class="form-label">Assign To</label>
-                        <select name="assigned_to" class="form-select">
-                            <option value="">Unassigned</option>
+                        <label class="form-label">Assign To <span class="text-danger">*</span></label>
+                        <select name="assigned_to" class="form-select" required>
                             @foreach($employees as $emp)
                                 <option value="{{ $emp->id }}" {{ old('assigned_to', $task->assigned_to) == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="col-md-3 mb-3">
-                        <label class="form-label">Start Date</label>
-                        <input type="date" name="start_date" class="form-control" value="{{ old('start_date', $task->start_date?->format('Y-m-d')) }}">
+                        <label class="form-label">Start Date <span class="text-danger">*</span></label>
+                        <input type="date" name="start_date" class="form-control" value="{{ old('start_date', $task->start_date?->format('Y-m-d')) }}" required>
                     </div>
                     <div class="col-md-3 mb-3">
-                        <label class="form-label">Due Date</label>
-                        <input type="date" name="due_date" class="form-control" value="{{ old('due_date', $task->due_date?->format('Y-m-d')) }}">
+                        <label class="form-label">Due in (days) <span class="text-danger">*</span></label>
+                        <input type="number" name="due_days" class="form-control" value="{{ $dueDaysValue }}" min="1" max="3650" required>
+                        <small class="text-muted">Recalculates due date from start date</small>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label">Status</label>
@@ -69,22 +68,6 @@
                         <select name="priority" class="form-select" required>
                             @foreach(config('constants.task_priorities') as $p)
                                 <option value="{{ $p }}" {{ old('priority', $task->priority) == $p ? 'selected' : '' }}>{{ ucfirst($p) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Type</label>
-                        <select name="type" class="form-select" required>
-                            @foreach(config('constants.task_types') as $t)
-                                <option value="{{ $t }}" {{ old('type', $task->type) == $t ? 'selected' : '' }}>{{ ucfirst($t) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Category</label>
-                        <select name="category" class="form-select" required>
-                            @foreach(config('constants.task_categories') as $c)
-                                <option value="{{ $c }}" {{ old('category', $task->category) == $c ? 'selected' : '' }}>{{ ucfirst($c) }}</option>
                             @endforeach
                         </select>
                     </div>

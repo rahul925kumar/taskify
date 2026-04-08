@@ -13,14 +13,12 @@ class DashboardController extends Controller
 
         $pendingTasks = Task::where('assigned_to', $user->id)
             ->whereNotIn('status', ['completed', 'cancelled'])
-            ->with('project')
             ->latest()
             ->get();
 
         $overdueTasks = Task::where('assigned_to', $user->id)
             ->where('due_date', '<', today())
             ->whereNotIn('status', ['completed', 'cancelled'])
-            ->with('project')
             ->get();
 
         $completedCount = Task::where('assigned_to', $user->id)->where('status', 'completed')->count();
@@ -29,7 +27,6 @@ class DashboardController extends Controller
         $overdueCount = $overdueTasks->count();
 
         $recentTasks = Task::where('assigned_to', $user->id)
-            ->with('project')
             ->latest('updated_at')
             ->take(10)
             ->get();

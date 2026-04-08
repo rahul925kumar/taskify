@@ -143,7 +143,7 @@
                             <thead>
                                 <tr>
                                     <th>Task</th>
-                                    <th>Project</th>
+                                    <th>Initially assigned</th>
                                     <th>Status</th>
                                     <th>Priority</th>
                                     <th>Due</th>
@@ -155,7 +155,7 @@
                                         <td>
                                             <a href="{{ route('admin.tasks.show', $task) }}">{{ Str::limit($task->title, 40) }}</a>
                                         </td>
-                                        <td>{{ $task->project->name ?? '—' }}</td>
+                                        <td>{{ $task->originalAssignee?->name ?? '—' }}</td>
                                         <td>
                                             <span class="badge bg-{{ $task->status === 'completed' ? 'success' : ($task->status === 'in_progress' ? 'primary' : 'warning') }}">
                                                 {{ ucfirst(str_replace('_', ' ', $task->status)) }}

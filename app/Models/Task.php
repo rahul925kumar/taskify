@@ -11,8 +11,8 @@ class Task extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'title', 'description', 'project_id', 'assigned_to', 'created_by',
-        'start_date', 'due_date', 'status', 'priority', 'type', 'category',
+        'title', 'description', 'project_id', 'assigned_to', 'originally_assigned_to', 'created_by',
+        'start_date', 'due_date', 'status', 'priority', 'type', 'category', 'cancellation_reason',
     ];
 
     protected function casts(): array
@@ -31,6 +31,11 @@ class Task extends Model
     public function assignee()
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function originalAssignee()
+    {
+        return $this->belongsTo(User::class, 'originally_assigned_to')->withTrashed();
     }
 
     public function creator()
@@ -60,6 +65,6 @@ class Task extends Model
 
     public function isOverdue(): bool
     {
-        return $this->due_date && $this->due_date->isPast() && !in_array($this->status, ['completed', 'cancelled']);
+        return $this->due_date && $this->due_date->isPast() && ! in_array($this->status, ['completed', 'cancelled']);
     }
 }

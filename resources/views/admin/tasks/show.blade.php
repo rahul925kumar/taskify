@@ -34,22 +34,29 @@
                         $prioColors = ['low'=>'secondary','medium'=>'info','high'=>'warning','urgent'=>'danger'];
                     @endphp
                     <div class="row mb-3">
-                        <div class="col-md-3"><strong>Project:</strong><br>{{ $task->project->name }}</div>
+                        <div class="col-md-3"><strong>Assigned to:</strong><br>{{ $task->assignee->name ?? 'Unassigned' }}</div>
+                        <div class="col-md-3"><strong>Initially assigned:</strong><br>{{ $task->originalAssignee?->name ?? '—' }}</div>
                         <div class="col-md-3"><strong>Status:</strong><br><span class="badge bg-{{ $statusColors[$task->status] ?? 'secondary' }}">{{ ucfirst(str_replace('_',' ',$task->status)) }}</span></div>
                         <div class="col-md-3"><strong>Priority:</strong><br><span class="badge bg-{{ $prioColors[$task->priority] ?? 'secondary' }}">{{ ucfirst($task->priority) }}</span></div>
-                        <div class="col-md-3"><strong>Type:</strong><br><span class="badge bg-dark">{{ ucfirst($task->type) }}</span></div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-3"><strong>Category:</strong><br>{{ ucfirst($task->category) }}</div>
-                        <div class="col-md-3"><strong>Start Date:</strong><br>{{ $task->start_date?->format('M d, Y') ?? '-' }}</div>
-                        <div class="col-md-3"><strong>Due Date:</strong><br>
+                        <div class="col-md-6"><strong>Start Date:</strong><br>{{ $task->start_date?->format('M d, Y') ?? '-' }}</div>
+                        <div class="col-md-6"><strong>Due Date:</strong><br>
                             @if($task->due_date)
                                 <span class="{{ $task->isOverdue() ? 'text-danger fw-bold' : '' }}">{{ $task->due_date->format('M d, Y') }}</span>
                                 @if($task->isOverdue()) <span class="badge bg-danger">OVERDUE</span> @endif
                             @else - @endif
                         </div>
-                        <div class="col-md-3"><strong>Created By:</strong><br>{{ $task->creator->name }}</div>
                     </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12"><strong>Created By:</strong> {{ $task->creator->name }}</div>
+                    </div>
+
+                    @if($task->status === 'cancelled' && $task->cancellation_reason)
+                        <div class="alert alert-danger py-2 mb-3">
+                            <strong>Cancellation reason:</strong> {{ $task->cancellation_reason }}
+                        </div>
+                    @endif
 
                     @if($task->description)
                         <div class="mb-3">
@@ -133,6 +140,28 @@
 
         {{-- Right Sidebar --}}
         <div class="col-md-4">
+            {{-- Update Status --}}
+            <div class="card">
+                <div class="card-header"><h4 class="card-title">Update Status</h4></div>
+                <div class="card-body">
+                    <form method="POST" action="{{ route('admin.tasks.update-status', $task) }}" id="admin-task-status-form">
+                        @csrf
+                        @method('PATCH')
+                        <label class="form-label">Status</label>
+                        <select name="status" id="admin-task-status" class="form-select form-select-sm mb-2">
+                            @foreach(config('constants.task_statuses') as $s)
+                                <option value="{{ $s }}" {{ $task->status === $s ? 'selected' : '' }}>{{ ucfirst(str_replace('_',' ',$s)) }}</option>
+                            @endforeach
+                        </select>
+                        <div id="admin-cancel-reason-wrap" class="mb-2 {{ $task->status === 'cancelled' ? '' : 'd-none' }}">
+                            <label class="form-label">Cancellation reason <span class="text-danger">*</span></label>
+                            <textarea name="cancellation_reason" id="admin-cancel-reason" class="form-control form-control-sm" rows="2" placeholder="Required when setting status to Cancelled">{{ old('cancellation_reason', $task->cancellation_reason) }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary w-100">Update Status</button>
+                    </form>
+                </div>
+            </div>
+
             {{-- Assignee & Reassign --}}
             <div class="card">
                 <div class="card-header"><h4 class="card-title">Assigned To</h4></div>
@@ -196,6 +225,24 @@
 @push('scripts')
 <script src="{{ asset('assets/js/plugin/sweetalert/sweetalert.min.js') }}"></script>
 <script>
+    (function () {
+        var sel = document.getElementById('admin-task-status');
+        var wrap = document.getElementById('admin-cancel-reason-wrap');
+        var ta = document.getElementById('admin-cancel-reason');
+        if (!sel || !wrap || !ta) return;
+        function sync() {
+            if (sel.value === 'cancelled') {
+                wrap.classList.remove('d-none');
+                ta.setAttribute('required', 'required');
+            } else {
+                wrap.classList.add('d-none');
+                ta.removeAttribute('required');
+            }
+        }
+        sel.addEventListener('change', sync);
+        sync();
+    })();
+
     document.querySelectorAll('.delete-form').forEach(form => {
         form.addEventListener('submit', function(e) {
             e.preventDefault();

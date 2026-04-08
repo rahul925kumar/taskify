@@ -2,7 +2,12 @@
 @section('title', 'Admin Dashboard')
 @section('content')
     <div class="page-header">
-        <h3 class="fw-bold mb-3">Dashboard</h3>
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <h3 class="fw-bold mb-0">Dashboard</h3>
+            <a href="{{ route('admin.tasks.index') }}" class="btn btn-primary">
+                <i class="fas fa-list me-1"></i> View all tasks
+            </a>
+        </div>
         <ul class="breadcrumbs mb-3">
             <li class="nav-home"><a href="{{ route('admin.dashboard') }}"><i class="icon-home"></i></a></li>
             <li class="separator"><i class="icon-arrow-right"></i></li>
@@ -67,13 +72,13 @@
                     <div class="row align-items-center">
                         <div class="col-icon">
                             <div class="icon-big text-center icon-info bubble-shadow-small">
-                                <i class="fas fa-project-diagram"></i>
+                                <i class="fas fa-clipboard-list"></i>
                             </div>
                         </div>
                         <div class="col col-stats ms-3 ms-sm-0">
                             <div class="numbers">
-                                <p class="card-category">Projects</p>
-                                <h4 class="card-title">{{ $totalProjects }}</h4>
+                                <p class="card-category">Open Tasks</p>
+                                <h4 class="card-title">{{ $openTasks }}</h4>
                             </div>
                         </div>
                     </div>
@@ -127,8 +132,10 @@
                 <div class="card-header">
                     <div class="card-title">Tasks by Status</div>
                 </div>
-                <div class="card-body">
-                    <canvas id="taskStatusChart" height="250"></canvas>
+                <div class="card-body chart-fixed-height">
+                    <div class="position-relative" style="height: 260px;">
+                        <canvas id="taskStatusChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -139,8 +146,10 @@
                 <div class="card-header">
                     <div class="card-title">Employee Task Performance</div>
                 </div>
-                <div class="card-body">
-                    <canvas id="employeeChart" height="250"></canvas>
+                <div class="card-body chart-fixed-height">
+                    <div class="position-relative" style="height: 260px;">
+                        <canvas id="employeeChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -151,7 +160,10 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title">Recent Tasks</div>
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                        <div class="card-title mb-0">Recent Tasks</div>
+                        <a href="{{ route('admin.tasks.index') }}" class="btn btn-sm btn-outline-primary">View full task list</a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -159,8 +171,8 @@
                             <thead>
                                 <tr>
                                     <th>Task</th>
-                                    <th>Project</th>
                                     <th>Assignee</th>
+                                    <th>Initially assigned</th>
                                     <th>Status</th>
                                     <th>Priority</th>
                                 </tr>
@@ -169,8 +181,8 @@
                                 @forelse($recentTasks as $task)
                                     <tr>
                                         <td><a href="{{ route('admin.tasks.show', $task) }}">{{ Str::limit($task->title, 30) }}</a></td>
-                                        <td>{{ $task->project->name ?? '-' }}</td>
                                         <td>{{ $task->assignee->name ?? 'Unassigned' }}</td>
+                                        <td>{{ $task->originalAssignee?->name ?? '—' }}</td>
                                         <td><span class="badge bg-{{ $task->status === 'completed' ? 'success' : ($task->status === 'in_progress' ? 'primary' : 'warning') }}">{{ ucfirst(str_replace('_', ' ', $task->status)) }}</span></td>
                                         <td><span class="badge bg-{{ $task->priority === 'urgent' ? 'danger' : ($task->priority === 'high' ? 'warning' : 'secondary') }}">{{ ucfirst($task->priority) }}</span></td>
                                     </tr>
