@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\LeaveController as AdminLeaveController;
 use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
+use App\Http\Controllers\Admin\PettyCashController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\TaskController as AdminTaskController;
 use App\Http\Controllers\Auth\LoginController;
@@ -49,6 +50,14 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
     Route::post('/leaves/{leave}/bulk-reassign', [AdminLeaveController::class, 'bulkReassign'])->name('leaves.bulk-reassign');
 
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/petty-cash/report', [PettyCashController::class, 'report'])->name('petty-cash.report');
+    Route::get('/petty-cash/report/export-csv', [PettyCashController::class, 'exportReportCsv'])->name('petty-cash.report.csv');
+    Route::get('/petty-cash/create', [PettyCashController::class, 'create'])->name('petty-cash.create');
+    Route::post('/petty-cash', [PettyCashController::class, 'store'])->name('petty-cash.store');
+    Route::get('/petty-cash', [PettyCashController::class, 'index'])->name('petty-cash.index');
+    Route::get('/petty-cash/{id}/edit', [PettyCashController::class, 'edit'])->name('petty-cash.edit');
+    Route::put('/petty-cash/{id}', [PettyCashController::class, 'update'])->name('petty-cash.update');
+    Route::delete('/petty-cash/{id}', [PettyCashController::class, 'destroy'])->name('petty-cash.destroy');
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
 
     Route::get('/notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
