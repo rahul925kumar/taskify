@@ -64,6 +64,12 @@
                             <p>Task Reports</p>
                         </a>
                     </li>
+                    <li class="nav-item {{ request()->routeIs('admin.petty-cash.*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.petty-cash.index') }}">
+                            <i class="fas fa-wallet"></i>
+                            <p>Petty Cash</p>
+                        </a>
+                    </li>
                     <li class="nav-item {{ request()->routeIs('admin.leaves.*') ? 'active' : '' }}">
                         <a href="{{ route('admin.leaves.index') }}">
                             <i class="fas fa-calendar-minus"></i>
