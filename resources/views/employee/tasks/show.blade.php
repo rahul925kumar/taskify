@@ -38,6 +38,13 @@
                         </div>
                         <div class="col-md-4"><strong>Created By:</strong><br>{{ $task->creator->name }}</div>
                     </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6"><strong>Created:</strong><br>{{ $task->created_at->format('M d, Y h:i A') }}</div>
+                        <div class="col-md-6"><strong>Days since created:</strong><br>
+                            <span class="badge bg-info text-dark fs-6">{{ $task->daysSinceCreation() }} {{ Str::plural('day', $task->daysSinceCreation()) }}</span>
+                            <span class="text-muted small ms-1">(from creation date)</span>
+                        </div>
+                    </div>
                     @if($task->status === 'cancelled' && $task->cancellation_reason)
                         <div class="alert alert-danger py-2 mb-3">
                             <strong>Cancellation reason:</strong> {{ $task->cancellation_reason }}

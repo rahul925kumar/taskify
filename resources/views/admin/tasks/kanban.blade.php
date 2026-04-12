@@ -67,6 +67,7 @@
                                     @if($task->due_date)
                                         <div><i class="fas fa-calendar" style="font-size:10px;"></i> Due {{ $task->due_date->format('M d') }}</div>
                                     @endif
+                                    <div><i class="fas fa-hourglass-half" style="font-size:10px;"></i> {{ $task->daysSinceCreation() }} {{ Str::plural('day', $task->daysSinceCreation()) }} since created</div>
                                 </div>
                                 @if($task->status === 'cancelled' && $task->cancellation_reason)
                                     <div class="task-cancel-reason kanban-cancel-display">{{ Str::limit($task->cancellation_reason, 120) }}</div>

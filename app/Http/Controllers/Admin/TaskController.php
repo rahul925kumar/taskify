@@ -11,9 +11,14 @@ use App\Models\User;
 use App\Notifications\TaskNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class TaskController extends Controller
 {
+    /** Admin may soft-delete only these statuses (fixed product rule). */
+    private const ADMIN_DELETABLE_STATUSES = ['completed', 'cancelled'];
+
     public function index(Request $request)
     {
         $query = Task::with(['assignee', 'project', 'originalAssignee']);
@@ -189,6 +194,10 @@ class TaskController extends Controller
 
     public function destroy(Task $task)
     {
+        if (! in_array($task->status, self::ADMIN_DELETABLE_STATUSES, true)) {
+            return back()->with('error', 'Only completed or cancelled tasks can be deleted.');
+        }
+
         $task->delete();
 
         TaskHistory::create([
@@ -199,6 +208,47 @@ class TaskController extends Controller
         ]);
 
         return redirect()->route('admin.tasks.index')->with('success', 'Task deleted successfully.');
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'distinct', Rule::exists('tasks', 'id')->whereNull('deleted_at')],
+        ]);
+
+        $tasks = Task::whereIn('id', $validated['ids'])
+            ->whereIn('status', self::ADMIN_DELETABLE_STATUSES)
+            ->get();
+
+        $requested = count(array_unique($validated['ids']));
+        $count = 0;
+
+        foreach ($tasks as $task) {
+            $task->delete();
+            TaskHistory::create([
+                'task_id' => $task->id,
+                'user_id' => auth()->id(),
+                'action' => 'deleted',
+                'details' => 'Task soft deleted (bulk).',
+            ]);
+            $count++;
+        }
+
+        if ($count === 0) {
+            return redirect()->route('admin.tasks.index')->with('error', 'Only completed or cancelled tasks can be deleted.');
+        }
+
+        $message = $count === 1
+            ? '1 task deleted successfully.'
+            : "{$count} tasks deleted successfully.";
+
+        $skipped = $requested - $count;
+        if ($skipped > 0) {
+            $message .= " {$skipped} ".Str::plural('task', $skipped).' '.($skipped === 1 ? 'was' : 'were').' skipped (not completed or cancelled).';
+        }
+
+        return redirect()->route('admin.tasks.index')->with('success', $message);
     }
 
     public function kanban(Request $request)

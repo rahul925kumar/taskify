@@ -21,10 +21,12 @@
                         <h4 class="card-title">{{ $task->title }}</h4>
                         <div>
                             <a href="{{ route('admin.tasks.edit', $task) }}" class="btn btn-sm btn-warning"><i class="fas fa-edit me-1"></i>Edit</a>
-                            <form action="{{ route('admin.tasks.destroy', $task) }}" method="POST" class="d-inline delete-form">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash me-1"></i>Delete</button>
-                            </form>
+                            @if(in_array($task->status, ['completed', 'cancelled'], true))
+                                <form action="{{ route('admin.tasks.destroy', $task) }}" method="POST" class="d-inline delete-form">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash me-1"></i>Delete</button>
+                                </form>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -46,6 +48,13 @@
                                 <span class="{{ $task->isOverdue() ? 'text-danger fw-bold' : '' }}">{{ $task->due_date->format('M d, Y') }}</span>
                                 @if($task->isOverdue()) <span class="badge bg-danger">OVERDUE</span> @endif
                             @else - @endif
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6"><strong>Created:</strong><br>{{ $task->created_at->format('M d, Y h:i A') }}</div>
+                        <div class="col-md-6"><strong>Days since created:</strong><br>
+                            <span class="badge bg-info text-dark fs-6">{{ $task->daysSinceCreation() }} {{ Str::plural('day', $task->daysSinceCreation()) }}</span>
+                            <span class="text-muted small ms-1">(from creation date)</span>
                         </div>
                     </div>
                     <div class="row mb-3">

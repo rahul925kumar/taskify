@@ -67,4 +67,15 @@ class Task extends Model
     {
         return $this->due_date && $this->due_date->isPast() && ! in_array($this->status, ['completed', 'cancelled']);
     }
+
+    /**
+     * Full calendar days elapsed since the task was created (0 = created today).
+     */
+    public function daysSinceCreation(): int
+    {
+        $created = $this->created_at->copy()->startOfDay();
+        $today = now()->startOfDay();
+
+        return max(0, (int) $created->diffInDays($today));
+    }
 }

@@ -36,6 +36,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
     Route::resource('employees', EmployeeController::class);
     Route::resource('clients', ClientController::class)->except(['show']);
 
+    Route::delete('/tasks/bulk', [AdminTaskController::class, 'bulkDestroy'])->name('tasks.bulk-destroy');
     Route::resource('tasks', AdminTaskController::class);
     Route::get('/tasks-kanban', [AdminTaskController::class, 'kanban'])->name('tasks.kanban');
     Route::patch('/tasks/{task}/status', [AdminTaskController::class, 'updateStatus'])->name('tasks.update-status');

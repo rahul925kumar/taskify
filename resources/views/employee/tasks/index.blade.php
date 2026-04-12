@@ -44,7 +44,7 @@
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
-                        <tr><th>#</th><th>Title</th><th>Initially assigned</th><th>Status</th><th>Priority</th><th>Due Date</th><th>Actions</th></tr>
+                        <tr><th>#</th><th>Title</th><th>Initially assigned</th><th>Status</th><th>Priority</th><th>Due Date</th><th>Days since created</th><th>Actions</th></tr>
                     </thead>
                     <tbody>
                         @php
@@ -64,10 +64,11 @@
                                         @if($task->isOverdue()) <i class="fas fa-exclamation-circle text-danger"></i> @endif
                                     @else - @endif
                                 </td>
+                                <td><span class="badge bg-light text-dark border">{{ $task->daysSinceCreation() }} {{ Str::plural('day', $task->daysSinceCreation()) }}</span></td>
                                 <td><a href="{{ route('employee.tasks.show', $task) }}" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></a></td>
                             </tr>
                         @empty
-                            <tr><td colspan="7" class="text-center text-muted">No tasks found.</td></tr>
+                            <tr><td colspan="8" class="text-center text-muted">No tasks found.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
