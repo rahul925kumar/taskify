@@ -24,11 +24,7 @@
                         $prioColors = ['low'=>'secondary','medium'=>'info','high'=>'warning','urgent'=>'danger'];
                     @endphp
                     @php $isAssignee = (int) $task->assigned_to === (int) auth()->id(); @endphp
-                    @if(! $isAssignee && (int) $task->created_by === (int) auth()->id())
-                        <div class="alert alert-info py-2 mb-3">
-                            You created this task. Only the <strong>assignee</strong> can change status, add comments, or upload attachments.
-                        </div>
-                    @endif
+                    @php $canManageTask = $isAssignee || (int) $task->created_by === (int) auth()->id() || (int) $task->originally_assigned_to === (int) auth()->id(); @endphp
                     <div class="row mb-3">
                         <div class="col-md-4"><strong>Status:</strong><br><span class="badge bg-{{ $statusColors[$task->status] ?? 'secondary' }}">{{ ucfirst(str_replace('_',' ',$task->status)) }}</span></div>
                         <div class="col-md-4"><strong>Priority:</strong><br><span class="badge bg-{{ $prioColors[$task->priority] ?? 'secondary' }}">{{ ucfirst($task->priority) }}</span></div>
@@ -66,7 +62,7 @@
             </div>
 
             {{-- Update Status --}}
-            @if($isAssignee)
+            @if($canManageTask)
             <div class="card">
                 <div class="card-header"><h4 class="card-title">Update Status</h4></div>
                 <div class="card-body">
@@ -83,11 +79,32 @@
             </div>
             @endif
 
+            {{-- Reassign Task --}}
+            @if($canManageTask)
+            <div class="card">
+                <div class="card-header"><h4 class="card-title">Reassign Task</h4></div>
+                <div class="card-body">
+                    <form method="POST" action="{{ route('employee.tasks.reassign', $task) }}" class="d-flex flex-wrap gap-2 align-items-end">
+                        @csrf
+                        <div>
+                            <label class="form-label mb-1">Assign to</label>
+                            <select name="assigned_to" class="form-select form-select-sm" required style="min-width: 240px;">
+                                @foreach($assignableUsers as $u)
+                                    <option value="{{ $u->id }}" {{ (int) $task->assigned_to === (int) $u->id ? 'selected' : '' }}>{{ $u->name }}{{ $u->is_admin ? ' (Admin)' : '' }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-warning">Reassign</button>
+                    </form>
+                </div>
+            </div>
+            @endif
+
             {{-- Comments --}}
             <div class="card">
                 <div class="card-header"><h4 class="card-title">Comments</h4></div>
                 <div class="card-body">
-                    @if($isAssignee)
+                    @if($canManageTask)
                     <form method="POST" action="{{ route('employee.tasks.comment', $task) }}" class="mb-4">
                         @csrf
                         <textarea name="comment" class="form-control mb-2" rows="3" placeholder="Add a comment..." required></textarea>
@@ -104,7 +121,7 @@
                                 <strong>{{ $comment->user?->name ?? 'Deleted User' }}</strong>
                                 <span class="text-muted ms-2" style="font-size:12px;">{{ $comment->created_at->diffForHumans() }}</span>
                                 <p class="mb-1">{{ $comment->comment }}</p>
-                                @if($isAssignee)
+                                @if($canManageTask)
                                 <a href="#" class="text-primary" style="font-size:12px;" onclick="event.preventDefault(); document.getElementById('reply-{{ $comment->id }}').classList.toggle('d-none');">Reply</a>
 
                                 <form method="POST" action="{{ route('employee.tasks.comment', $task) }}" class="mt-2 d-none" id="reply-{{ $comment->id }}">
@@ -170,7 +187,7 @@
                         </div>
                     @endforeach
 
-                    @if($isAssignee)
+                    @if($canManageTask)
                     <form method="POST" action="{{ route('employee.tasks.attachment', $task) }}" enctype="multipart/form-data" class="mt-3">
                         @csrf
                         <div class="input-group input-group-sm">

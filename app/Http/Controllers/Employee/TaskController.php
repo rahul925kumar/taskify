@@ -19,7 +19,9 @@ class TaskController extends Controller
         $uid = auth()->id();
 
         return Task::query()->where(function ($q) use ($uid) {
-            $q->where('assigned_to', $uid)->orWhere('created_by', $uid);
+            $q->where('assigned_to', $uid)
+                ->orWhere('created_by', $uid)
+                ->orWhere('originally_assigned_to', $uid);
         });
     }
 
@@ -27,12 +29,14 @@ class TaskController extends Controller
     {
         $uid = (int) auth()->id();
 
-        return (int) $task->assigned_to === $uid || (int) $task->created_by === $uid;
+        return (int) $task->assigned_to === $uid
+            || (int) $task->created_by === $uid
+            || (int) $task->originally_assigned_to === $uid;
     }
 
     protected function employeeCanActOnTask(Task $task): bool
     {
-        return (int) $task->assigned_to === (int) auth()->id();
+        return $this->employeeCanViewTask($task);
     }
 
     public function index(Request $request)
@@ -138,8 +142,41 @@ class TaskController extends Controller
         }
 
         $task->load(['project', 'assignee', 'originalAssignee', 'creator', 'comments.user', 'comments.replies.user', 'attachments.uploader', 'histories.user']);
+        $assignableUsers = User::assignableForTasks();
 
-        return view('employee.tasks.show', compact('task'));
+        return view('employee.tasks.show', compact('task', 'assignableUsers'));
+    }
+
+    public function reassign(Request $request, Task $task)
+    {
+        if (! $this->employeeCanActOnTask($task)) {
+            abort(403);
+        }
+
+        $request->validate(['assigned_to' => 'required|exists:users,id']);
+
+        $oldAssignee = $task->assignee ? $task->assignee->name : 'Unassigned';
+        $updates = ['assigned_to' => $request->assigned_to];
+        if ($task->originally_assigned_to === null) {
+            $updates['originally_assigned_to'] = $task->assigned_to ?? $request->assigned_to;
+        }
+        $task->update($updates);
+        $newAssignee = $task->fresh()->assignee;
+
+        TaskHistory::create([
+            'task_id' => $task->id,
+            'user_id' => auth()->id(),
+            'action' => 'reassigned',
+            'details' => "Reassigned from {$oldAssignee} to {$newAssignee->name} by employee",
+        ]);
+
+        $newAssignee->notify(new TaskNotification(
+            'Task Assigned',
+            "Task '{$task->title}' has been assigned to you by ".auth()->user()->name.'.',
+            $task->urlForAssignee($newAssignee)
+        ));
+
+        return back()->with('success', 'Task reassigned successfully.');
     }
 
     public function updateStatus(Request $request, Task $task)

@@ -77,6 +77,7 @@ Route::prefix('employee')->middleware(['auth', 'employee'])->name('employee.')->
     Route::get('/tasks/kanban', [EmployeeTaskController::class, 'kanban'])->name('tasks.kanban');
     Route::get('/tasks/{task}', [EmployeeTaskController::class, 'show'])->name('tasks.show');
     Route::patch('/tasks/{task}/status', [EmployeeTaskController::class, 'updateStatus'])->name('tasks.update-status');
+    Route::post('/tasks/{task}/reassign', [EmployeeTaskController::class, 'reassign'])->name('tasks.reassign');
     Route::post('/tasks/{task}/comment', [EmployeeTaskController::class, 'addComment'])->name('tasks.comment');
     Route::post('/tasks/{task}/attachment', [EmployeeTaskController::class, 'addAttachment'])->name('tasks.attachment');
 
