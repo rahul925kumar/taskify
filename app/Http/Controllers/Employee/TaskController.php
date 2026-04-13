@@ -9,13 +9,35 @@ use App\Models\TaskComment;
 use App\Models\TaskHistory;
 use App\Models\User;
 use App\Notifications\TaskNotification;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
+    protected function tasksVisibleToEmployee()
+    {
+        $uid = auth()->id();
+
+        return Task::query()->where(function ($q) use ($uid) {
+            $q->where('assigned_to', $uid)->orWhere('created_by', $uid);
+        });
+    }
+
+    protected function employeeCanViewTask(Task $task): bool
+    {
+        $uid = (int) auth()->id();
+
+        return (int) $task->assigned_to === $uid || (int) $task->created_by === $uid;
+    }
+
+    protected function employeeCanActOnTask(Task $task): bool
+    {
+        return (int) $task->assigned_to === (int) auth()->id();
+    }
+
     public function index(Request $request)
     {
-        $query = Task::where('assigned_to', auth()->id())->with('originalAssignee');
+        $query = $this->tasksVisibleToEmployee()->with(['originalAssignee', 'assignee']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -29,9 +51,89 @@ class TaskController extends Controller
         return view('employee.tasks.index', compact('tasks'));
     }
 
+    public function create()
+    {
+        $assignableUsers = User::assignableForTasks();
+
+        return view('employee.tasks.create', compact('assignableUsers'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'assigned_to' => 'required|exists:users,id',
+            'start_date' => 'required|date',
+            'due_days' => 'required|integer|min:1|max:3650',
+            'status' => 'required|in:'.implode(',', config('constants.task_statuses')),
+            'priority' => 'required|in:'.implode(',', config('constants.task_priorities')),
+            'attachments.*' => 'nullable|file|max:10240',
+        ]);
+
+        $start = Carbon::parse($validated['start_date']);
+        $dueDays = (int) $validated['due_days'];
+        unset($validated['due_days']);
+
+        $validated['due_date'] = $start->copy()->addDays($dueDays)->toDateString();
+        $validated['project_id'] = null;
+        $validated['type'] = 'feature';
+        $validated['category'] = 'other';
+        $validated['originally_assigned_to'] = $validated['assigned_to'];
+        $validated['cancellation_reason'] = null;
+        $validated['created_by'] = auth()->id();
+
+        $task = Task::create($validated);
+
+        TaskHistory::create([
+            'task_id' => $task->id,
+            'user_id' => auth()->id(),
+            'action' => 'created',
+            'details' => 'Task created by employee.',
+        ]);
+
+        if ($task->status === 'completed') {
+            foreach (User::where('is_admin', true)->get() as $admin) {
+                $admin->notify(new TaskNotification(
+                    'Task Completed',
+                    "Task '{$task->title}' was marked completed by ".auth()->user()->name.'.',
+                    route('admin.tasks.show', $task)
+                ));
+            }
+        }
+
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $originalName = $file->getClientOriginalName();
+                $mimeType = $file->getClientMimeType();
+                $size = $file->getSize();
+                $filename = time().'_'.$originalName;
+                $file->move(public_path('uploads/attachments'), $filename);
+                TaskAttachment::create([
+                    'task_id' => $task->id,
+                    'uploaded_by' => auth()->id(),
+                    'filename' => $filename,
+                    'original_name' => $originalName,
+                    'mime_type' => $mimeType,
+                    'size' => $size,
+                ]);
+            }
+        }
+
+        if ($task->assignee) {
+            $task->assignee->notify(new TaskNotification(
+                'New Task Assigned',
+                "You have been assigned to task: {$task->title}",
+                $task->urlForAssignee($task->assignee)
+            ));
+        }
+
+        return redirect()->route('employee.tasks.index')->with('success', 'Task created successfully.');
+    }
+
     public function show(Task $task)
     {
-        if ($task->assigned_to !== auth()->id()) {
+        if (! $this->employeeCanViewTask($task)) {
             abort(403);
         }
 
@@ -42,7 +144,7 @@ class TaskController extends Controller
 
     public function updateStatus(Request $request, Task $task)
     {
-        if ($task->assigned_to !== auth()->id()) {
+        if (! $this->employeeCanActOnTask($task)) {
             abort(403);
         }
 
@@ -94,7 +196,7 @@ class TaskController extends Controller
 
     public function addComment(Request $request, Task $task)
     {
-        if ($task->assigned_to !== auth()->id()) {
+        if (! $this->employeeCanActOnTask($task)) {
             abort(403);
         }
 
@@ -119,7 +221,7 @@ class TaskController extends Controller
 
     public function addAttachment(Request $request, Task $task)
     {
-        if ($task->assigned_to !== auth()->id()) {
+        if (! $this->employeeCanActOnTask($task)) {
             abort(403);
         }
 
@@ -146,7 +248,7 @@ class TaskController extends Controller
 
     public function kanban()
     {
-        $tasks = Task::where('assigned_to', auth()->id())
+        $tasks = $this->tasksVisibleToEmployee()
             ->with(['project', 'originalAssignee'])
             ->get()
             ->groupBy('status');

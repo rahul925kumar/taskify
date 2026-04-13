@@ -23,12 +23,19 @@
                         $statusColors = ['todo'=>'warning','in_progress'=>'primary','in_review'=>'info','completed'=>'success','on_hold'=>'secondary','cancelled'=>'danger'];
                         $prioColors = ['low'=>'secondary','medium'=>'info','high'=>'warning','urgent'=>'danger'];
                     @endphp
+                    @php $isAssignee = (int) $task->assigned_to === (int) auth()->id(); @endphp
+                    @if(! $isAssignee && (int) $task->created_by === (int) auth()->id())
+                        <div class="alert alert-info py-2 mb-3">
+                            You created this task. Only the <strong>assignee</strong> can change status, add comments, or upload attachments.
+                        </div>
+                    @endif
                     <div class="row mb-3">
                         <div class="col-md-4"><strong>Status:</strong><br><span class="badge bg-{{ $statusColors[$task->status] ?? 'secondary' }}">{{ ucfirst(str_replace('_',' ',$task->status)) }}</span></div>
                         <div class="col-md-4"><strong>Priority:</strong><br><span class="badge bg-{{ $prioColors[$task->priority] ?? 'secondary' }}">{{ ucfirst($task->priority) }}</span></div>
-                        <div class="col-md-4"><strong>Initially assigned:</strong><br>{{ $task->originalAssignee?->name ?? '—' }}</div>
+                        <div class="col-md-4"><strong>Assignee:</strong><br>{{ $task->assignee->name ?? 'Unassigned' }}</div>
                     </div>
                     <div class="row mb-3">
+                        <div class="col-md-4"><strong>Initially assigned:</strong><br>{{ $task->originalAssignee?->name ?? '—' }}</div>
                         <div class="col-md-4"><strong>Start Date:</strong><br>{{ $task->start_date?->format('M d, Y') ?? '-' }}</div>
                         <div class="col-md-4"><strong>Due Date:</strong><br>
                             @if($task->due_date)
@@ -36,6 +43,8 @@
                                 @if($task->isOverdue()) <span class="badge bg-danger">OVERDUE</span> @endif
                             @else - @endif
                         </div>
+                    </div>
+                    <div class="row mb-3">
                         <div class="col-md-4"><strong>Created By:</strong><br>{{ $task->creator->name }}</div>
                     </div>
                     <div class="row mb-3">
@@ -57,6 +66,7 @@
             </div>
 
             {{-- Update Status --}}
+            @if($isAssignee)
             <div class="card">
                 <div class="card-header"><h4 class="card-title">Update Status</h4></div>
                 <div class="card-body">
@@ -71,17 +81,20 @@
                     </form>
                 </div>
             </div>
+            @endif
 
             {{-- Comments --}}
             <div class="card">
                 <div class="card-header"><h4 class="card-title">Comments</h4></div>
                 <div class="card-body">
+                    @if($isAssignee)
                     <form method="POST" action="{{ route('employee.tasks.comment', $task) }}" class="mb-4">
                         @csrf
                         <textarea name="comment" class="form-control mb-2" rows="3" placeholder="Add a comment..." required></textarea>
                         <button type="submit" class="btn btn-sm btn-primary">Post Comment</button>
                     </form>
                     <hr>
+                    @endif
                     @forelse($task->comments as $comment)
                         <div class="d-flex mb-3">
                             <div class="avatar avatar-sm me-3">
@@ -91,6 +104,7 @@
                                 <strong>{{ $comment->user?->name ?? 'Deleted User' }}</strong>
                                 <span class="text-muted ms-2" style="font-size:12px;">{{ $comment->created_at->diffForHumans() }}</span>
                                 <p class="mb-1">{{ $comment->comment }}</p>
+                                @if($isAssignee)
                                 <a href="#" class="text-primary" style="font-size:12px;" onclick="event.preventDefault(); document.getElementById('reply-{{ $comment->id }}').classList.toggle('d-none');">Reply</a>
 
                                 <form method="POST" action="{{ route('employee.tasks.comment', $task) }}" class="mt-2 d-none" id="reply-{{ $comment->id }}">
@@ -99,6 +113,7 @@
                                     <textarea name="comment" class="form-control form-control-sm mb-1" rows="2" required></textarea>
                                     <button type="submit" class="btn btn-xs btn-primary">Reply</button>
                                 </form>
+                                @endif
 
                                 @foreach($comment->replies as $reply)
                                     <div class="d-flex mt-2 ms-4">
@@ -155,6 +170,7 @@
                         </div>
                     @endforeach
 
+                    @if($isAssignee)
                     <form method="POST" action="{{ route('employee.tasks.attachment', $task) }}" enctype="multipart/form-data" class="mt-3">
                         @csrf
                         <div class="input-group input-group-sm">
@@ -162,6 +178,7 @@
                             <button type="submit" class="btn btn-primary">Upload</button>
                         </div>
                     </form>
+                    @endif
                 </div>
             </div>
         </div>

@@ -6,12 +6,16 @@
     .kanban-column { min-width: 280px; max-width: 300px; flex-shrink: 0; }
     .kanban-column .card { min-height: 400px; }
     .kanban-column .card-header { padding: 10px 15px; }
-    .kanban-task { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: grab; transition: box-shadow 0.2s; }
+    .kanban-task { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: grab; transition: box-shadow 0.2s; color: #111; }
     .kanban-task:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .kanban-task .task-title { font-weight: 600; font-size: 14px; margin-bottom: 5px; }
-    .kanban-task .task-meta { font-size: 11px; color: #8d9498; }
+    .kanban-task .task-title { font-weight: 600; font-size: 16px; margin-bottom: 6px; }
+    .kanban-task .task-title a { color: #111; }
+    .kanban-task .task-title .btn-link { color: #111 !important; }
+    .kanban-task .task-meta { font-size: 13px; color: #111; line-height: 1.45; }
+    .kanban-task .task-meta i { font-size: 12px !important; }
+    .kanban-task .badge { font-size: 11px !important; }
     .task-count { background: rgba(255,255,255,0.3); border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
-    .task-cancel-reason { font-size: 11px; margin-top: 6px; padding: 6px; background: #fdeaea; border-radius: 4px; color: #c62828; }
+    .task-cancel-reason { font-size: 12px; margin-top: 6px; padding: 6px; background: #fdeaea; border-radius: 4px; color: #c62828; }
 </style>
 @endpush
 @section('content')
@@ -59,7 +63,7 @@
                                     <a href="{{ route('admin.tasks.edit', $task) }}" class="btn btn-link btn-sm p-0 text-secondary" title="Edit" onclick="event.stopPropagation();"><i class="fas fa-edit"></i></a>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center mt-2">
-                                    <span class="badge bg-{{ ['low'=>'secondary','medium'=>'info','high'=>'warning','urgent'=>'danger'][$task->priority] ?? 'secondary' }}" style="font-size:10px;">{{ ucfirst($task->priority) }}</span>
+                                    <span class="badge bg-{{ ['low'=>'secondary','medium'=>'info','high'=>'warning','urgent'=>'danger'][$task->priority] ?? 'secondary' }}">{{ ucfirst($task->priority) }}</span>
                                 </div>
                                 <div class="task-meta mt-1">
                                     <div><i class="fas fa-user" style="font-size:10px;"></i> <strong>Now:</strong> {{ $task->assignee->name ?? 'Unassigned' }}</div>

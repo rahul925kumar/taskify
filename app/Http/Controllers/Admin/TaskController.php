@@ -39,14 +39,16 @@ class TaskController extends Controller
         $tasks = $query->latest()->paginate(15)->withQueryString();
         $employees = User::where('is_admin', false)->orderBy('name')->get();
 
-        return view('admin.tasks.index', compact('tasks', 'employees'));
+        $assignableUsers = User::assignableForTasks();
+
+        return view('admin.tasks.index', compact('tasks', 'assignableUsers'));
     }
 
     public function create()
     {
-        $employees = User::where('is_admin', false)->orderBy('name')->get();
+        $assignableUsers = User::assignableForTasks();
 
-        return view('admin.tasks.create', compact('employees'));
+        return view('admin.tasks.create', compact('assignableUsers'));
     }
 
     public function store(Request $request)
@@ -105,11 +107,13 @@ class TaskController extends Controller
             }
         }
 
-        $task->assignee->notify(new TaskNotification(
-            'New Task Assigned',
-            "You have been assigned to task: {$task->title}",
-            route('employee.tasks.show', $task)
-        ));
+        if ($task->assignee) {
+            $task->assignee->notify(new TaskNotification(
+                'New Task Assigned',
+                "You have been assigned to task: {$task->title}",
+                $task->urlForAssignee($task->assignee)
+            ));
+        }
 
         return redirect()->route('admin.tasks.index')->with('success', 'Task created successfully.');
     }
@@ -117,16 +121,16 @@ class TaskController extends Controller
     public function show(Task $task)
     {
         $task->load(['project', 'assignee', 'originalAssignee', 'creator', 'comments.user', 'comments.replies.user', 'attachments.uploader', 'histories.user']);
-        $employees = User::where('is_admin', false)->orderBy('name')->get();
+        $assignableUsers = User::assignableForTasks();
 
-        return view('admin.tasks.show', compact('task', 'employees'));
+        return view('admin.tasks.show', compact('task', 'assignableUsers'));
     }
 
     public function edit(Task $task)
     {
-        $employees = User::where('is_admin', false)->orderBy('name')->get();
+        $assignableUsers = User::assignableForTasks();
 
-        return view('admin.tasks.edit', compact('task', 'employees'));
+        return view('admin.tasks.edit', compact('task', 'assignableUsers'));
     }
 
     public function update(Request $request, Task $task)
@@ -174,7 +178,7 @@ class TaskController extends Controller
             $task->assignee->notify(new TaskNotification(
                 'Task Reassigned',
                 "Task '{$task->title}' has been assigned to you.",
-                route('employee.tasks.show', $task)
+                $task->urlForAssignee($task->assignee)
             ));
 
             TaskHistory::create([
@@ -378,7 +382,7 @@ class TaskController extends Controller
         $newAssignee->notify(new TaskNotification(
             'Task Assigned',
             "Task '{$task->title}' has been assigned to you.",
-            route('employee.tasks.show', $task)
+            $task->urlForAssignee($newAssignee)
         ));
 
         return back()->with('success', 'Task reassigned successfully.');

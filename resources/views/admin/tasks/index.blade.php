@@ -38,9 +38,9 @@
                 </div>
                 <div class="col-md-3">
                     <select name="assigned_to" class="form-select form-select-sm" onchange="this.form.submit()" aria-label="Filter by assignee">
-                        <option value="">All Employees</option>
-                        @foreach($employees as $emp)
-                            <option value="{{ $emp->id }}" {{ request('assigned_to') == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
+                        <option value="">All assignees</option>
+                        @foreach($assignableUsers as $u)
+                            <option value="{{ $u->id }}" {{ request('assigned_to') == $u->id ? 'selected' : '' }}>{{ $u->name }}{{ $u->is_admin ? ' (Admin)' : '' }}</option>
                         @endforeach
                     </select>
                 </div>

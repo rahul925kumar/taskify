@@ -12,9 +12,12 @@
 
     <div class="card">
         <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h4 class="card-title">My Tasks</h4>
-                <a href="{{ route('employee.tasks.kanban') }}" class="btn btn-sm btn-primary"><i class="fas fa-columns me-1"></i>Kanban</a>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h4 class="card-title mb-0">My Tasks</h4>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ route('employee.tasks.create') }}" class="btn btn-sm btn-success"><i class="fas fa-plus me-1"></i>New Task</a>
+                    <a href="{{ route('employee.tasks.kanban') }}" class="btn btn-sm btn-primary"><i class="fas fa-columns me-1"></i>Kanban</a>
+                </div>
             </div>
         </div>
         <div class="card-body">
@@ -44,7 +47,7 @@
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
-                        <tr><th>#</th><th>Title</th><th>Initially assigned</th><th>Status</th><th>Priority</th><th>Due Date</th><th>Days since created</th><th>Actions</th></tr>
+                        <tr><th>#</th><th>Title</th><th>Assignee</th><th>Initially assigned</th><th>Status</th><th>Priority</th><th>Due Date</th><th>Days since created</th><th>Actions</th></tr>
                     </thead>
                     <tbody>
                         @php
@@ -55,6 +58,7 @@
                             <tr class="{{ $task->isOverdue() ? 'table-danger' : '' }}">
                                 <td>{{ $task->id }}</td>
                                 <td><a href="{{ route('employee.tasks.show', $task) }}">{{ Str::limit($task->title, 40) }}</a></td>
+                                <td>{{ $task->assignee->name ?? 'Unassigned' }}</td>
                                 <td>{{ $task->originalAssignee?->name ?? '—' }}</td>
                                 <td><span class="badge bg-{{ $statusColors[$task->status] ?? 'secondary' }}">{{ ucfirst(str_replace('_',' ',$task->status)) }}</span></td>
                                 <td><span class="badge bg-{{ $prioColors[$task->priority] ?? 'secondary' }}">{{ ucfirst($task->priority) }}</span></td>
@@ -68,7 +72,7 @@
                                 <td><a href="{{ route('employee.tasks.show', $task) }}" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></a></td>
                             </tr>
                         @empty
-                            <tr><td colspan="8" class="text-center text-muted">No tasks found.</td></tr>
+                            <tr><td colspan="9" class="text-center text-muted">No tasks found.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

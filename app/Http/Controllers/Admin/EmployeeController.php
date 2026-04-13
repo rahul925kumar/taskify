@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\OtpMail;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class EmployeeController extends Controller
 {
@@ -106,5 +109,33 @@ class EmployeeController extends Controller
         $employee->delete();
 
         return redirect()->route('admin.employees.index')->with('success', 'Employee soft deleted successfully.');
+    }
+
+    /**
+     * Create a new login OTP for an employee so the admin can share it if email delivery fails.
+     */
+    public function issueLoginOtp(User $employee)
+    {
+        if ($employee->is_admin) {
+            abort(403, 'Only employee accounts use OTP login.');
+        }
+
+        $otp = $employee->issueFreshLoginOtp();
+
+        $adminEmail = config('constants.admin_email');
+        if ($adminEmail) {
+            try {
+                Mail::to($adminEmail)->send(new OtpMail($otp, $employee->name, $employee->email));
+            } catch (\Exception $e) {
+                Log::error('OTP Mail failed (admin issue): '.$e->getMessage());
+            }
+        }
+
+        return redirect()
+            ->route('admin.employees.index')
+            ->with('success', 'A new login OTP was generated. Copy the code below and share it with the employee if email is not working.')
+            ->with('show_employee_otp', $otp)
+            ->with('show_employee_otp_email', $employee->email)
+            ->with('show_employee_otp_name', $employee->name);
     }
 }

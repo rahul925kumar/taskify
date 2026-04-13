@@ -11,14 +11,11 @@ class Attendance extends Model
 
     protected $fillable = ['user_id', 'login_at', 'logout_at', 'date'];
 
-    protected function casts(): array
-    {
-        return [
-            'login_at' => 'datetime',
-            'logout_at' => 'datetime',
-            'date' => 'date',
-        ];
-    }
+    protected $casts = [
+        'login_at' => 'datetime',
+        'logout_at' => 'datetime',
+        'date' => 'date',
+    ];
 
     public function user()
     {

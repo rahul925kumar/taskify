@@ -33,6 +33,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->midd
 Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboard::class, 'index'])->name('dashboard');
 
+    Route::post('/employees/{employee}/login-otp', [EmployeeController::class, 'issueLoginOtp'])->name('employees.issue-login-otp');
     Route::resource('employees', EmployeeController::class);
     Route::resource('clients', ClientController::class)->except(['show']);
 
@@ -70,6 +71,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
 Route::prefix('employee')->middleware(['auth', 'employee'])->name('employee.')->group(function () {
     Route::get('/dashboard', [EmployeeDashboard::class, 'index'])->name('dashboard');
 
+    Route::get('/tasks/create', [EmployeeTaskController::class, 'create'])->name('tasks.create');
+    Route::post('/tasks', [EmployeeTaskController::class, 'store'])->name('tasks.store');
     Route::get('/tasks', [EmployeeTaskController::class, 'index'])->name('tasks.index');
     Route::get('/tasks/kanban', [EmployeeTaskController::class, 'kanban'])->name('tasks.kanban');
     Route::get('/tasks/{task}', [EmployeeTaskController::class, 'show'])->name('tasks.show');

@@ -37,10 +37,10 @@
                 </div>
                 <div class="row">
                     <div class="col-md-3 mb-3">
-                        <label class="form-label">Assign To <span class="text-danger">*</span></label>
+                        <label class="form-label">Assign to <span class="text-danger">*</span></label>
                         <select name="assigned_to" class="form-select" required>
-                            @foreach($employees as $emp)
-                                <option value="{{ $emp->id }}" {{ old('assigned_to', $task->assigned_to) == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
+                            @foreach($assignableUsers as $u)
+                                <option value="{{ $u->id }}" {{ (string) old('assigned_to', $task->assigned_to) === (string) $u->id ? 'selected' : '' }}>{{ $u->name }}{{ $u->is_admin ? ' (Admin)' : '' }}</option>
                             @endforeach
                         </select>
                     </div>

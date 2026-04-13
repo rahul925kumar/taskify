@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 class Task extends Model
 {
@@ -15,13 +17,10 @@ class Task extends Model
         'start_date', 'due_date', 'status', 'priority', 'type', 'category', 'cancellation_reason',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'start_date' => 'date',
-            'due_date' => 'date',
-        ];
-    }
+    protected $casts = [
+        'start_date' => 'date',
+        'due_date' => 'date',
+    ];
 
     public function project()
     {
@@ -65,7 +64,15 @@ class Task extends Model
 
     public function isOverdue(): bool
     {
-        return $this->due_date && $this->due_date->isPast() && ! in_array($this->status, ['completed', 'cancelled']);
+        if (! $this->due_date || in_array($this->status, ['completed', 'cancelled'], true)) {
+            return false;
+        }
+
+        $due = $this->due_date instanceof CarbonInterface
+            ? $this->due_date
+            : Carbon::parse($this->due_date);
+
+        return $due->isPast();
     }
 
     /**
@@ -77,5 +84,19 @@ class Task extends Model
         $today = now()->startOfDay();
 
         return max(0, (int) $created->diffInDays($today));
+    }
+
+    /**
+     * Link to open this task for the assignee (admin panel vs employee panel).
+     */
+    public function urlForAssignee(?User $assignee = null): string
+    {
+        $assignee = $assignee ?? $this->assignee;
+
+        if ($assignee && $assignee->is_admin) {
+            return route('admin.tasks.show', $this);
+        }
+
+        return route('employee.tasks.show', $this);
     }
 }

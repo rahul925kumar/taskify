@@ -13,13 +13,10 @@ class Leave extends Model
         'user_id', 'delegated_to', 'from_date', 'to_date', 'type', 'reason', 'status', 'admin_remarks',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'from_date' => 'date',
-            'to_date' => 'date',
-        ];
-    }
+    protected $casts = [
+        'from_date' => 'date',
+        'to_date' => 'date',
+    ];
 
     public function user()
     {

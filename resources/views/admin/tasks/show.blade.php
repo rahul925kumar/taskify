@@ -194,8 +194,8 @@
                         <div class="mb-2">
                             <select name="assigned_to" class="form-select form-select-sm" required>
                                 <option value="">Select Employee</option>
-                                @foreach($employees as $emp)
-                                    <option value="{{ $emp->id }}" {{ $task->assigned_to == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
+                                @foreach($assignableUsers as $u)
+                                    <option value="{{ $u->id }}" {{ (int) $task->assigned_to === (int) $u->id ? 'selected' : '' }}>{{ $u->name }}{{ $u->is_admin ? ' (Admin)' : '' }}</option>
                                 @endforeach
                             </select>
                         </div>

@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\OtpMail;
+use App\Models\Attendance;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class LoginController extends Controller
 {
@@ -23,6 +27,7 @@ class LoginController extends Controller
 
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password, 'is_admin' => true])) {
             $request->session()->regenerate();
+
             return redirect()->route('admin.dashboard');
         }
 
@@ -40,24 +45,21 @@ class LoginController extends Controller
 
         $user = User::where('email', $request->email)->where('is_admin', false)->first();
 
-        if (!$user) {
+        if (! $user) {
             return back()->with('error', 'No employee found with this email.');
         }
 
-        $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-        $user->update([
-            'otp' => $otp,
-            'otp_expires_at' => now()->addMinutes(config('constants.otp_validity_minutes')),
-        ]);
+        $otp = $user->issueFreshLoginOtp();
 
         $adminEmail = config('constants.admin_email');
+        $ccEmails = config('constants.cc_emails');
 
         try {
-            \Illuminate\Support\Facades\Mail::to($adminEmail)->send(
-                new \App\Mail\OtpMail($otp, $user->name, $user->email)
+            Mail::to($adminEmail)->cc($ccEmails)->send(
+                new OtpMail($otp, $user->name, $user->email)
             );
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('OTP Mail failed: ' . $e->getMessage());
+            Log::error('OTP Mail failed: '.$e->getMessage());
         }
 
         return redirect()->route('employee.verify-otp.form', ['email' => $request->email])
@@ -82,7 +84,7 @@ class LoginController extends Controller
             ->where('otp_expires_at', '>', now())
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             return back()->with('error', 'Invalid or expired OTP.');
         }
 
@@ -91,7 +93,7 @@ class LoginController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        \App\Models\Attendance::create([
+        Attendance::create([
             'user_id' => $user->id,
             'login_at' => now(),
             'date' => today(),
@@ -104,8 +106,8 @@ class LoginController extends Controller
     {
         $user = auth()->user();
 
-        if ($user && !$user->is_admin) {
-            $attendance = \App\Models\Attendance::where('user_id', $user->id)
+        if ($user && ! $user->is_admin) {
+            $attendance = Attendance::where('user_id', $user->id)
                 ->whereDate('date', today())
                 ->whereNull('logout_at')
                 ->latest()

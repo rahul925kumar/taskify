@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 
 class User extends Authenticatable
 {
@@ -21,14 +23,51 @@ class User extends Authenticatable
         'password', 'remember_token', 'otp',
     ];
 
-    protected function casts(): array
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'otp_expires_at' => 'datetime',
+        'is_admin' => 'boolean',
+    ];
+
+    public function setPasswordAttribute($value): void
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'otp_expires_at' => 'datetime',
-            'password' => 'hashed',
-            'is_admin' => 'boolean',
-        ];
+        if ($value === null) {
+            $this->attributes['password'] = null;
+
+            return;
+        }
+
+        if (is_string($value) && password_get_info($value)['algo'] !== 0) {
+            $this->attributes['password'] = $value;
+
+            return;
+        }
+
+        $this->attributes['password'] = Hash::make($value);
+    }
+
+    /**
+     * Generate a new employee login OTP and persist it. Returns the plain OTP for admin handoff.
+     */
+    public function issueFreshLoginOtp(): string
+    {
+        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $this->update([
+            'otp' => $otp,
+            'otp_expires_at' => now()->addMinutes((int) config('constants.otp_validity_minutes', 10)),
+        ]);
+
+        return $otp;
+    }
+
+    /**
+     * All users that can be selected as task assignees (employees and admins).
+     *
+     * @return Collection<int, User>
+     */
+    public static function assignableForTasks()
+    {
+        return static::query()->orderByDesc('is_admin')->orderBy('name')->get();
     }
 
     public function assignedTasks()

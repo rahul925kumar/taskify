@@ -11,13 +11,10 @@ class PettyCashTransaction extends Model
         'transaction_at', 'type', 'amount', 'description', 'reference', 'recorded_by',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'transaction_at' => 'datetime',
-            'amount' => 'decimal:2',
-        ];
-    }
+    protected $casts = [
+        'transaction_at' => 'datetime',
+        'amount' => 'decimal:2',
+    ];
 
     public function recorder(): BelongsTo
     {

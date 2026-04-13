@@ -110,6 +110,12 @@
                             <p>My Tasks</p>
                         </a>
                     </li>
+                    <li class="nav-item {{ request()->routeIs('employee.tasks.create') ? 'active' : '' }}">
+                        <a href="{{ route('employee.tasks.create') }}">
+                            <i class="fas fa-plus-circle"></i>
+                            <p>Create Task</p>
+                        </a>
+                    </li>
                     <li class="nav-item {{ request()->routeIs('employee.tasks.kanban') ? 'active' : '' }}">
                         <a href="{{ route('employee.tasks.kanban') }}">
                             <i class="fas fa-columns"></i>
